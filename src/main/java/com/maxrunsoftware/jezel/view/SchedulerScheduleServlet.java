@@ -20,6 +20,7 @@ import static com.maxrunsoftware.jezel.Util.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.maxrunsoftware.jezel.model.SchedulerJob;
 import com.maxrunsoftware.jezel.model.SchedulerSchedule;
 
 import jakarta.servlet.ServletException;
@@ -33,18 +34,36 @@ public class SchedulerScheduleServlet extends ServletBase {
 	@Override
 	protected void doGetAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		var schedulerScheduleId = getParameterId(request, SchedulerSchedule.ID);
+		var schedulerJobId = getParameterId(request, SchedulerJob.ID);
+
 		try (var session = db.openSession()) {
 
 			var schedulerSchedules = new ArrayList<SchedulerSchedule>();
-			if (schedulerScheduleId == null) {
-				schedulerSchedules.addAll(getAll(SchedulerSchedule.class, session));
-			} else {
-				schedulerSchedules.add(getById(SchedulerSchedule.class, session, schedulerScheduleId));
+			for (var schedulerSchedule : getAll(SchedulerSchedule.class, session)) {
+				boolean shouldAdd = true;
+				if (schedulerScheduleId != null) {
+
+					if (((int) schedulerScheduleId) != schedulerSchedule.getSchedulerScheduleId()) {
+
+						shouldAdd = false;
+					}
+				}
+
+				if (schedulerJobId != null) {
+
+					if (((int) schedulerJobId) != schedulerSchedule.getSchedulerJob().getSchedulerJobId()) {
+
+						shouldAdd = false;
+					}
+				}
+
+				if (shouldAdd) schedulerSchedules.add(schedulerSchedule);
+
 			}
 
 			var json = createObjectBuilder()
 					.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)
-					.add(RESPONSE_MESSAGE, "Found " + schedulerSchedules.size() + " SchedulerActions");
+					.add(RESPONSE_MESSAGE, "Found " + schedulerSchedules.size() + " " + SchedulerSchedule.class.getSimpleName() + "s");
 
 			json.add(SchedulerSchedule.NAME, createArrayBuilder(schedulerSchedules));
 			writeResponse(response, json);
@@ -53,8 +72,21 @@ public class SchedulerScheduleServlet extends ServletBase {
 
 	@Override
 	protected void doPutAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		var schedulerJobId = getParameterId(request, SchedulerJob.ID);
+		if (schedulerJobId == null) {
+			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerJob.ID + "' parameter provided to create SchedulerSchedule", 400);
+			return;
+		}
 		try (var session = db.openSession()) {
+
+			var schedulerJob = getById(SchedulerJob.class, session, schedulerJobId);
+			if (schedulerJob == null) {
+				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerJob[" + schedulerJobId + "] does not exist", 404);
+				return;
+			}
+
 			var schedulerSchedule = new SchedulerSchedule();
+			schedulerSchedule.setSchedulerJob(schedulerJob);
 			schedulerSchedule.setDisabled(false);
 			var schedulerScheduleId = save(session, schedulerSchedule);
 
