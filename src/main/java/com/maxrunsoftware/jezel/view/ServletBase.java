@@ -29,6 +29,7 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import com.maxrunsoftware.jezel.BearerService;
 import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.DatabaseService;
+import com.maxrunsoftware.jezel.SettingService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -42,6 +43,7 @@ public abstract class ServletBase extends HttpServlet {
 	private Object locker = new Object();
 	private Map<String, Object> services = null;
 	protected HttpSession session;
+	protected SettingService settings;
 	protected DatabaseService db;
 	protected BearerService bearer;
 
@@ -55,6 +57,7 @@ public abstract class ServletBase extends HttpServlet {
 
 	@Override
 	public void init() throws ServletException {
+		settings = getService(SettingService.class);
 		db = getService(DatabaseService.class);
 		bearer = getService(BearerService.class);
 	}
@@ -145,10 +148,11 @@ public abstract class ServletBase extends HttpServlet {
 			errorMessage = "Invalid AUTHORIZATION Bearer token " + authBearer;
 		}
 
-		if (errorMessage != null) return true;
 		if (errorMessage == null) return true;
 
 		LOG.debug(errorMessage);
+
+		if (settings.getWebIgnoreCredentials()) return true;
 
 		var json = createObjectBuilder()
 				.add(RESPONSE_STATUS, RESPONSE_STATUS_UNAUTHORIZED)

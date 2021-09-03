@@ -68,6 +68,10 @@ public interface SettingService {
 		return getEnvironmentVariable("JEZEL_DatabaseDir", "mem");
 	}
 
+	public default boolean getWebIgnoreCredentials() {
+		return getEnvironmentVariable("JEZEL_WebIgnoreCredentials", true);
+	}
+
 	public default Map<String, Object> toMap() {
 		var map = new CaseInsensitiveMap<String, Object>();
 		map.put("Directory", getDirectory());
