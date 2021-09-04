@@ -21,17 +21,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public class HomeServlet extends ServletBase {
+public class LogoutServlet extends ServletBase {
 
-	private static final long serialVersionUID = 2114495585770348816L;
+	private static final long serialVersionUID = 3706054652229211131L;
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String logout = """
-				<a href="/logout">Logout</a>
-				""";
-		String html = "hello " + request.getUserPrincipal().getName();
-
+		request.getSession().invalidate();
+		String html = "Successfully logged out";
 		writeResponse(response, html);
 	}
 

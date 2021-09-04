@@ -73,6 +73,26 @@ public interface SettingService {
 		return getEnvironmentVariable("JEZEL_DatabaseDir", "mem");
 	}
 
+	public default int getWebMaxThreads() {
+		return getEnvironmentVariable("JEZEL_WebMaxThreads", 100);
+	}
+
+	public default int getWebMinThreads() {
+		return getEnvironmentVariable("JEZEL_WebMinThreads", 10);
+	}
+
+	public default int getWebIdleTimeout() {
+		return getEnvironmentVariable("JEZEL_WebIdleTimeout", 120);
+	}
+
+	public default boolean getWebJoinThread() {
+		return getEnvironmentVariable("JEZEL_WebJoinThread", true);
+	}
+
+	public default boolean getWebIgnoreCredentials() {
+		return getEnvironmentVariable("JEZEL_WebIgnoreCredentials", true);
+	}
+
 	public default Map<String, Object> toMap() {
 		var map = new CaseInsensitiveMap<String, Object>();
 

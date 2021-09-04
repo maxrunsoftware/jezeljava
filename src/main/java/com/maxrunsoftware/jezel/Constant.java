@@ -57,13 +57,20 @@ public class Constant {
 
 	);
 
-	public static final List<Page> PAGES = List.of(
+	public static final List<Page> REST_SERVLETS = List.of(
 			new Page(HomeServlet.class, "/*"),
 			new Page(SessionServlet.class, "/session"),
 			new Page(SchedulerJobServlet.class, "/job"),
 			new Page(SchedulerScheduleServlet.class, "/job/schedule"),
 			new Page(SchedulerActionServlet.class, "/job/action"),
 			new Page(SchedulerActionParameterServlet.class, "/job/action/parameter")
+
+	);
+
+	public static final List<Page> WEB_SERVLETS = List.of(
+			new Page(com.maxrunsoftware.jezel.web.LoginServlet.class, "/login"),
+			new Page(com.maxrunsoftware.jezel.web.LogoutServlet.class, "/logout"),
+			new Page(com.maxrunsoftware.jezel.web.HomeServlet.class, "/*")
 
 	);
 
@@ -142,9 +149,9 @@ public class Constant {
 
 	);
 
-	public static final String CONTENTTYPE_TEXT = "text/plain";
-	public static final String CONTENTTYPE_JSON = "application/json";
+	public static final String CONTENTTYPE_TEXT = "text/plain; charset=UTF-8";
+	public static final String CONTENTTYPE_JSON = "application/json; charset=UTF-8";
 	public static final String CONTENTTYPE_BINARY = "application/octet-stream";
-
+	public static final String CONTENTTYPE_HTML = "text/html; charset=UTF-8";
 	public static final String ENCODING_UTF8 = "UTF-8";
 }

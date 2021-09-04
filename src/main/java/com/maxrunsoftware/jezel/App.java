@@ -16,12 +16,15 @@
 package com.maxrunsoftware.jezel;
 
 import static com.google.common.base.Preconditions.*;
+import static com.maxrunsoftware.jezel.Util.*;
 
 import javax.inject.Inject;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Singleton;
+import com.maxrunsoftware.jezel.service.SettingServiceEnvironment;
+import com.maxrunsoftware.jezel.web.WebServer;
 
 public class App {
 
@@ -47,23 +50,42 @@ public class App {
 		LogSetup.initialize(settingService.getLoggingLevel(), settingService.getLoggingLevelLibs());
 		LOG.info("Jezel Job Scheduling Engine  v" + Version.VALUE + "  dev@maxrunsoftware.com");
 
-		var module = new AbstractModule() {
-			@SuppressWarnings("unchecked")
-			@Override
-			protected void configure() {
-				for (var bnd : Constant.BINDS) {
-					if (bnd.singleton()) {
-						bind(bnd.classInterface()).to(bnd.classImplementation()).in(Singleton.class);
-					} else {
-						bind(bnd.classInterface()).to(bnd.classImplementation());
+		String serverType = null;
+		if (args == null || args.length == 0) serverType = "Not Specified";
+		else if (args.length > 1) serverType = "Too Many Args Specified";
+		else serverType = trimOrNull(args[0]);
+		if (serverType == null) serverType = "Not Specified";
+
+		if (serverType.equalsIgnoreCase("web")) {
+			var webServer = new WebServer(new SettingServiceEnvironment());
+			try {
+				webServer.start(true);
+			} catch (Exception e) {
+				LOG.error("Error in Web server", e);
+			}
+		} else if (serverType.equalsIgnoreCase("rest")) {
+			var module = new AbstractModule() {
+				@SuppressWarnings("unchecked")
+				@Override
+				protected void configure() {
+					for (var bnd : Constant.BINDS) {
+						if (bnd.singleton()) {
+							bind(bnd.classInterface()).to(bnd.classImplementation()).in(Singleton.class);
+						} else {
+							bind(bnd.classInterface()).to(bnd.classImplementation());
+						}
 					}
 				}
-			}
-		};
-		Constant.setInjector(Guice.createInjector(module));
+			};
+			Constant.setInjector(Guice.createInjector(module));
 
-		var app = Constant.getInstance(App.class);
-		app.run(args);
+			var app = Constant.getInstance(App.class);
+			app.run(args);
+
+		} else {
+			LOG.error("Valid server types are WEB or REST");
+		}
+
 	}
 
 	private void run(String[] args) {
@@ -83,7 +105,7 @@ public class App {
 			webServer.stop();
 			scheduler.stop();
 		} catch (Exception e) {
-			LOG.error("Error in web server", e);
+			LOG.error("Error in REST server", e);
 		}
 
 	}

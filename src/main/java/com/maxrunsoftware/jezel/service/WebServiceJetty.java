@@ -59,7 +59,7 @@ public class WebServiceJetty implements WebService {
 		server.addResource(DatabaseService.class.getName(), db);
 		server.addResource(BearerService.class.getName(), bearer);
 
-		for (var page : Constant.PAGES) {
+		for (var page : Constant.REST_SERVLETS) {
 			server.addPage(page.servlet(), page.path());
 		}
 

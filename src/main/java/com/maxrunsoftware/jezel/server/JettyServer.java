@@ -16,14 +16,23 @@
 package com.maxrunsoftware.jezel.server;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.eclipse.jetty.security.ConstraintMapping;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.security.HashLoginService;
+import org.eclipse.jetty.security.UserStore;
+import org.eclipse.jetty.security.authentication.FormAuthenticator;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.util.security.Password;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import jakarta.servlet.Servlet;
@@ -85,7 +94,12 @@ public class JettyServer {
 		server.setStopAtShutdown(true);
 		server.setStopTimeout(5000);
 
-		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		ServletContextHandler context;
+		if (credentials.size() > 0) {
+			context = new ServletContextHandler(ServletContextHandler.SESSIONS | ServletContextHandler.SECURITY);
+		} else {
+			context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		}
 		context.setContextPath("/");
 		context.setResourceBase(getTempDirectory());
 
@@ -104,6 +118,36 @@ public class JettyServer {
 		// ServletHandler servletHandler = new ServletHandler();
 		// server.setHandler(servletHandler);
 		// servletHandler.addServletWithMapping(Servlet.class, "/*");
+
+		if (credentials.size() > 0) {
+
+			Constraint constraint = new Constraint();
+			constraint.setName(Constraint.__FORM_AUTH);
+			constraint.setRoles(new String[] { "user", "admin" });
+			constraint.setAuthenticate(true);
+
+			ConstraintMapping constraintMapping = new ConstraintMapping();
+			constraintMapping.setConstraint(constraint);
+			constraintMapping.setPathSpec("/*");
+
+			var userStore = new UserStore();
+			for (var username : credentials.keySet()) {
+				var password = credentials.get(username);
+				userStore.addUser(username, new Password(password), new String[] { "user" });
+				LOG.debug("Adding credential [" + username + "]: " + password);
+			}
+			var loginService = new HashLoginService();
+			loginService.setUserStore(userStore);
+
+			ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
+			securityHandler.addConstraintMapping(constraintMapping);
+			securityHandler.setLoginService(loginService);
+
+			FormAuthenticator authenticator = new FormAuthenticator("/login", "/login?error=true", false);
+			securityHandler.setAuthenticator(authenticator);
+
+			context.setSecurityHandler(securityHandler);
+		}
 
 		LOG.info("Starting server on port " + port);
 		server.start();
@@ -159,5 +203,11 @@ public class JettyServer {
 
 	public void setTempDirectory(String tempDirectory) {
 		this.tempDirectory = tempDirectory;
+	}
+
+	private final Map<String, String> credentials = new HashMap<String, String>();
+
+	public void addCredential(String username, String password) {
+		credentials.put(username, password);
 	}
 }

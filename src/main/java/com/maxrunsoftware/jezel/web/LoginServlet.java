@@ -21,16 +21,19 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public class HomeServlet extends ServletBase {
+public class LoginServlet extends ServletBase {
 
-	private static final long serialVersionUID = 2114495585770348816L;
+	private static final long serialVersionUID = 6377692026473347039L;
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String logout = """
-				<a href="/logout">Logout</a>
-				""";
-		String html = "hello " + request.getUserPrincipal().getName();
+		String html = """
+				<form method=POST action="/j_security_check">
+				   	<input type="text" name="j_username" />
+				   	<input type="password" name="j_password" />
+				   	<input type="submit" value="Login" />
+				</form>
+					""";
 
 		writeResponse(response, html);
 	}
