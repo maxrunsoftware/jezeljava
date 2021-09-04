@@ -13,17 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maxrunsoftware.jezel.service;
+package com.maxrunsoftware.jezel.server;
 
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
-
-public class SchedulerServiceQuartzJob implements org.quartz.Job {
-	@Override
-	public void execute(JobExecutionContext context) throws JobExecutionException {
-		var id = Integer.parseInt(context.getJobDetail().getKey().getName());
-
-		var ssj = com.maxrunsoftware.jezel.Constant.getInstance(SchedulerServiceSchedulerJob.class);
-		ssj.execute(id);
-	}
+public interface QuartzServerExecutor {
+	public void execute(int jobId, int triggerId);
 }

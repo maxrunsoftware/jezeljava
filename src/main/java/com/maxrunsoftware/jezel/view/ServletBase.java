@@ -126,13 +126,23 @@ public abstract class ServletBase extends HttpServlet {
 	}
 
 	protected static Integer getParameterId(HttpServletRequest request, String idName) {
-		String val = trimOrNull(request.getParameter(idName));
+		String val = trimOrNull(getParameter(request, idName));
 		if (val == null) return null;
 		try {
 			return Integer.parseInt(val);
 		} catch (Throwable t) {
 			return null;
 		}
+	}
+
+	protected static String getParameter(HttpServletRequest request, String name) {
+		name = trimOrNull(name);
+		if (name == null) return null;
+		name = name.toLowerCase();
+		for (var pName : Collections.list(request.getParameterNames())) {
+			if (pName.toLowerCase().equals(name)) return request.getParameter(pName);
+		}
+		return null;
 	}
 
 	private boolean authorize(HttpServletRequest request, HttpServletResponse response) {
