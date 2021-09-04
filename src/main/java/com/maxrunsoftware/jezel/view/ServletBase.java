@@ -162,7 +162,7 @@ public abstract class ServletBase extends HttpServlet {
 
 		LOG.debug(errorMessage);
 
-		if (settings.getWebIgnoreCredentials()) return true;
+		if (settings.getRestIgnoreCredentials()) return true;
 
 		var json = createObjectBuilder()
 				.add(RESPONSE_STATUS, RESPONSE_STATUS_UNAUTHORIZED)

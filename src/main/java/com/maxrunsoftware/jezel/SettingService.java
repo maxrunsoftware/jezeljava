@@ -17,6 +17,7 @@ package com.maxrunsoftware.jezel;
 
 import static com.maxrunsoftware.jezel.Util.*;
 
+import java.lang.reflect.Modifier;
 import java.nio.file.Paths;
 import java.util.Map;
 
@@ -24,12 +25,12 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 public interface SettingService {
 
-	public default String getDirectory() {
+	public default String getDir() {
 		return coalesce(getEnvironmentVariable("JEZEL_Dir", trimOrNull(Paths.get(".").toAbsolutePath().normalize().toString())), System.getProperty("java.io.tmpdir"));
 	}
 
-	public default String getTempDirectory() {
-		return coalesce(getEnvironmentVariable("JEZEL_TempDir", System.getProperty("java.io.tmpdir")), trimOrNull(Paths.get(".").toAbsolutePath().normalize().toString()));
+	public default String getDirTemp() {
+		return coalesce(getEnvironmentVariable("JEZEL_DirTemp", System.getProperty("java.io.tmpdir")), trimOrNull(Paths.get(".").toAbsolutePath().normalize().toString()));
 	}
 
 	public default String getLoggingLevel() {
@@ -40,48 +41,56 @@ public interface SettingService {
 		return getEnvironmentVariable("JEZEL_LoggingLevelLibs", "warn");
 	}
 
-	public default int getWebPort() {
-		return getEnvironmentVariable("JEZEL_WebPort", 8080);
+	public default int getRestPort() {
+		return getEnvironmentVariable("JEZEL_RestPort", 8080);
 	}
 
-	public default int getWebMaxThreads() {
-		return getEnvironmentVariable("JEZEL_WebMaxThreads", 100);
+	public default int getRestMaxThreads() {
+		return getEnvironmentVariable("JEZEL_RestMaxThreads", 100);
 	}
 
-	public default int getWebMinThreads() {
-		return getEnvironmentVariable("JEZEL_WebMinThreads", 10);
+	public default int getRestMinThreads() {
+		return getEnvironmentVariable("JEZEL_RestMinThreads", 10);
 	}
 
-	public default int getWebIdleTimeout() {
-		return getEnvironmentVariable("JEZEL_WebIdleTimeout", 120);
+	public default int getRestIdleTimeout() {
+		return getEnvironmentVariable("JEZEL_RestIdleTimeout", 120);
 	}
 
-	public default boolean getWebJoinThread() {
-		return getEnvironmentVariable("JEZEL_WebJoinThread", true);
+	public default boolean getRestJoinThread() {
+		return getEnvironmentVariable("JEZEL_RestJoinThread", true);
+	}
+
+	public default boolean getRestIgnoreCredentials() {
+		return getEnvironmentVariable("JEZEL_RestIgnoreCredentials", true);
 	}
 
 	public default int getSchedulerThreads() {
 		return getEnvironmentVariable("JEZEL_SchedulerThreads", 10);
 	}
 
-	public default String getDatabaseDirectory() {
+	public default String getDatabaseDir() {
 		return getEnvironmentVariable("JEZEL_DatabaseDir", "mem");
-	}
-
-	public default boolean getWebIgnoreCredentials() {
-		return getEnvironmentVariable("JEZEL_WebIgnoreCredentials", true);
 	}
 
 	public default Map<String, Object> toMap() {
 		var map = new CaseInsensitiveMap<String, Object>();
-		map.put("Directory", getDirectory());
-		map.put("TempDirectory", getTempDirectory());
-		map.put("LoggingLevel", getLoggingLevel());
-		map.put("WebPort", getWebPort());
-		map.put("WebMaxThreads", getWebMaxThreads());
-		map.put("WebMinThreads", getWebMinThreads());
-		map.put("WebIdleTimeout", getWebIdleTimeout());
-		map.put("WebJoinThread", getWebJoinThread());
+
+		for (var method : getClass().getDeclaredMethods()) {
+			var methodName = method.getName();
+			if (!methodName.startsWith("get")) continue;
+			int modifiers = method.getModifiers();
+			if (!Modifier.isPublic(modifiers)) continue;
+			Object o;
+			try {
+				o = method.invoke(this);
+			} catch (Exception e) {
+				throw new Error(e);
+			}
+
+			map.put(methodName.substring("get".length()), o);
+
+		}
 		return map;
 	}
 }

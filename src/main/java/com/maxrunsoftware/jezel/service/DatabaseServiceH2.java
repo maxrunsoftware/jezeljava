@@ -38,7 +38,7 @@ public class DatabaseServiceH2 implements DatabaseService {
 			throw new Error(e); // should not happen
 		}
 
-		var directory = settings.getDatabaseDirectory();
+		var directory = settings.getDatabaseDir();
 
 		String cs;
 		if (directory == null || directory.equalsIgnoreCase("mem") || directory.equalsIgnoreCase("memory")) {

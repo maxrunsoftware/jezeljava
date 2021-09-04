@@ -49,11 +49,11 @@ public class WebServiceJetty implements WebService {
 	public void start(boolean joinThread) throws Exception {
 		LOG.debug("Starting");
 		var server = new JettyServer();
-		server.setMaxThreads(settings.getWebMaxThreads());
-		server.setMinThreads(settings.getWebMinThreads());
-		server.setIdleTimeout(settings.getWebIdleTimeout());
-		server.setPort(settings.getWebPort());
-		server.setTempDirectory(settings.getTempDirectory());
+		server.setMaxThreads(settings.getRestMaxThreads());
+		server.setMinThreads(settings.getRestMinThreads());
+		server.setIdleTimeout(settings.getRestIdleTimeout());
+		server.setPort(settings.getRestPort());
+		server.setTempDirectory(settings.getDirTemp());
 
 		server.addResource(SettingService.class.getName(), settings);
 		server.addResource(DatabaseService.class.getName(), db);

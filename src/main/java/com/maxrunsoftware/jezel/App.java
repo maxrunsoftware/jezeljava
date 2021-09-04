@@ -68,7 +68,7 @@ public class App {
 
 	private void run(String[] args) {
 		try {
-			var webjoinThread = settings.getWebJoinThread();
+			var webjoinThread = settings.getRestJoinThread();
 
 			scheduler.start(webjoinThread);
 			webServer.start(webjoinThread);
