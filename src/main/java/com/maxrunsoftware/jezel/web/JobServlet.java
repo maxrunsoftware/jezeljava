@@ -15,6 +15,8 @@
  */
 package com.maxrunsoftware.jezel.web;
 
+import static j2html.TagCreator.*;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -30,40 +32,33 @@ public class JobServlet extends ServletBase {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-		String html = """
-				<table>
-				  <tr>
-				    <th>JobId</th>
-				    <th>Name</th>
-				    <th>Path</th>
-				    <th>Schedules</th>
-				    <th>Actions</th>
-				    <th>Logs</th>
-				  </tr>
-				  ${tableRows}
-				</table>
-				""";
-
+		var headers = List.of("", "JobId", "Name", "Path", "Schedules", "Actions", "Logs", "Enabled");
 		List<SchedulerJob> jobs;
 		try {
 			jobs = client.getSchedulerJobs();
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
-		var sb = new StringBuilder();
-		for (var job : jobs) {
-			sb.append("<tr>");
-			sb.append("  <td>" + job.getSchedulerJobId() + "</td>");
-			sb.append("  <td>" + job.getName() + "</td>");
-			sb.append("  <td>" + job.getPath() + "</td>");
-			sb.append("  <td>" + job.getSchedulerSchedules().size() + "</td>");
-			sb.append("  <td>" + job.getSchedulerActions().size() + "</td>");
-			sb.append("  <td>" + job.getCommandLogJobs().size() + "</td>");
-			sb.append("</tr>");
-		}
-		html = html.replace("${tableRows}", sb.toString());
-		// String html = "hello " + request.getUserPrincipal().getName();
 
-		writeResponse(response, html);
+		var html = table(attrs("#table-example"),
+				thead(each(headers, h -> th(h))),
+				tbody(each(jobs, i -> tr(
+						td(a("Edit").withHref("/jobs?schedulerJobId=" + i.getSchedulerJobId())),
+						td("" + i.getSchedulerJobId()),
+						td("" + i.getName()),
+						td("" + i.getPath()),
+						td("" + i.getSchedulerSchedules().size()),
+						td("" + i.getSchedulerActions().size()),
+						td("" + i.getCommandLogJobs().size()),
+						td(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(!i.isDisabled())
+						// End of row
+						)))));
+
+		writeResponse(response, html.renderFormatted());
+	}
+
+	@Override
+	protected Nav getNav() {
+		return Nav.JOBS;
 	}
 }

@@ -39,4 +39,9 @@ public class HomeServlet extends ServletBase {
 		writeResponse(response, html);
 	}
 
+	@Override
+	protected Nav getNav() {
+		return Nav.HOME;
+	}
+
 }

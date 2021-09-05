@@ -30,7 +30,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
 
-public class ServletBase extends HttpServlet {
+public abstract class ServletBase extends HttpServlet {
 	private static final long serialVersionUID = 7162466372715656028L;
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ServletBase.class);
 
@@ -75,8 +75,27 @@ public class ServletBase extends HttpServlet {
 		writeResponse(response, title, html, 200);
 	}
 
+	protected static enum Nav {
+		NONE, HOME, JOBS, LOGS, LOGOUT
+	}
+
+	protected abstract Nav getNav();
+
 	protected void writeResponse(HttpServletResponse response, String title, String html, int statusCode) {
 		html = coalesce(trimOrNull(html), "Missing HTML");
+		var topNav = """
+				<div class="topnav">
+					<a ${activeHome} href="/">Home</a>
+					<a ${activeJobs} href="/jobs">Jobs</a>
+					<a ${activeLogs} href="/logs">Logs</a>
+					<a ${activeLogout} href="/logout">Logout</a>
+				</div>
+				""";
+		var active = "class=\"active\"";
+		topNav = topNav.replace("${activeHome}", getNav().equals(Nav.HOME) ? active : "");
+		topNav = topNav.replace("${activeJobs}", getNav().equals(Nav.JOBS) ? active : "");
+		topNav = topNav.replace("${activeLogs}", getNav().equals(Nav.LOGS) ? active : "");
+		topNav = topNav.replace("${activeLogout}", getNav().equals(Nav.LOGOUT) ? active : "");
 
 		var str = """
 				<html dir="ltr" lang="en">
@@ -110,15 +129,40 @@ public class ServletBase extends HttpServlet {
 						  background-color: #04AA6D;
 						  color: white;
 						}
+
+
+						table {
+						  font-family: Arial, Helvetica, sans-serif;
+						  border-collapse: collapse;
+						  width: 100%;
+						}
+						th {
+						  border: 1px solid #ddd;
+						  padding: 8px;
+						  width: 1px;
+						  white-space: nowrap;
+						  padding-top: 12px;
+						  padding-bottom: 12px;
+						  text-align: left;
+						  background-color: #4CAF50;
+						  color: white;
+						  cursor: pointer;
+						}
+						td {
+						  border: 1px solid #ddd;
+						  padding: 8px;
+						  width: 1px;
+						  white-space: nowrap;
+						}
+						tr:nth-child(even){background-color: #f2f2f2;}
+						tr:hover {background-color: #ddd;}
+
 						</style>
+
+
 					</head>
 					<body>
-						<div class="topnav">
-							<a class="active" href="/">Home</a>
-							<a href="/jobs">Jobs</a>
-							<a href="/logs">Logs</a>
-							<a href="/logout">Logout</a>
-						</div>
+						${topNav}
 						<br>
 
 						${body}
@@ -128,6 +172,7 @@ public class ServletBase extends HttpServlet {
 
 		str = str.replace("${title}", title);
 		str = str.replace("${body}", html);
+		str = str.replace("${topNav}", topNav);
 		str = trimOrNull(str);
 		html = str;
 

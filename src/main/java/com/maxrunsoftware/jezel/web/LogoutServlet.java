@@ -32,4 +32,9 @@ public class LogoutServlet extends ServletBase {
 		writeResponse(response, html);
 	}
 
+	@Override
+	protected Nav getNav() {
+		return Nav.LOGOUT;
+	}
+
 }

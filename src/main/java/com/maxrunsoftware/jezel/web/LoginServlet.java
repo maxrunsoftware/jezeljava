@@ -42,4 +42,9 @@ public class LoginServlet extends ServletBase {
 		writeResponse(response, html);
 	}
 
+	@Override
+	protected Nav getNav() {
+		return Nav.NONE;
+	}
+
 }
