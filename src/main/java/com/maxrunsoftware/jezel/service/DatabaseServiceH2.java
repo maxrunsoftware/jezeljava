@@ -70,8 +70,8 @@ public class DatabaseServiceH2 implements DatabaseService {
 		configuration.setProperty("hibernate.c3p0.acquireRetryAttempts", "1");
 		configuration.setProperty("hibernate.c3p0.acquireRetryDelay", "250");
 
-		configuration.setProperty("hibernate.show_sql", "true");
-		configuration.setProperty("hibernate.use_sql_comments", "true");
+		configuration.setProperty("hibernate.show_sql", "" + settings.getDatabaseShowSql());
+		configuration.setProperty("hibernate.use_sql_comments", "" + settings.getDatabaseShowSql());
 
 		// configuration.setProperty("hibernate.transaction.factory_class",
 		// "org.hibernate.transaction.JDBCTransactionFactory");

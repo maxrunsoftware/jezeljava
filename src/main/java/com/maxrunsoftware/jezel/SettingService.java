@@ -74,7 +74,11 @@ public interface SettingService {
 	}
 
 	public default boolean getRestIgnoreCredentials() {
-		return getEnvironmentVariable("JEZEL_RestIgnoreCredentials", true);
+		return getEnvironmentVariable("JEZEL_RestIgnoreCredentials", false);
+	}
+
+	public default boolean getRestShowRest() {
+		return getEnvironmentVariable("JEZEL_RestShowRest", false);
 	}
 
 	public default int getSchedulerThreads() {
@@ -83,6 +87,10 @@ public interface SettingService {
 
 	public default String getDatabaseDir() {
 		return getEnvironmentVariable("JEZEL_DatabaseDir", "mem");
+	}
+
+	public default boolean getDatabaseShowSql() {
+		return getEnvironmentVariable("JEZEL_DatabaseShowSql", false);
 	}
 
 	public default int getWebPort() {

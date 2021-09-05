@@ -41,22 +41,22 @@ import com.maxrunsoftware.jezel.model.SchedulerJob;
 public class RestClient {
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(RestClient.class);
 
-	private final String host;
-	private final String username;
-	private final String password;
 	private String bearer;
+	private final SettingService settings;
 
 	public RestClient(SettingService settings) {
+		this.settings = checkNotNull(settings);
+	}
+
+	private String getHost() {
 		var h = settings.getRestUrl();
 		if (!h.endsWith("/")) h = h + "/";
-		host = h;
-		username = settings.getRestUsername();
-		password = settings.getRestPassword();
+		return h;
 	}
 
 	public ImmutableList<SchedulerJob> getSchedulerJobs() throws Exception {
 		if (bearer == null) login();
-		var response = get(Verb.GET, host + "job");
+		var response = get(Verb.GET, getHost() + "job");
 		var o = response.jsonObject;
 		var array = o.getJsonArray("schedulerJobs");
 		var lb = ImmutableList.<SchedulerJob>builder();
@@ -70,7 +70,7 @@ public class RestClient {
 	}
 
 	private void login() throws Exception {
-		var response = get(Verb.POST, host + "session", username, password);
+		var response = get(Verb.POST, getHost() + "session", settings.getRestUsername(), settings.getRestPassword());
 		var o = response.jsonObject;
 		this.bearer = trimOrNull(o.getString("bearer"));
 	}
@@ -138,7 +138,8 @@ public class RestClient {
 				code = response.getCode();
 				HttpEntity httpEntity = response.getEntity();
 				json = EntityUtils.toString(httpEntity);
-				LOG.debug(json);
+
+				if (settings.getRestShowRest()) { LOG.debug(json); }
 
 				o = fromJsonString(json);
 
