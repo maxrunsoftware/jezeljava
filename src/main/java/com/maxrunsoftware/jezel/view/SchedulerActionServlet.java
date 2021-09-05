@@ -32,7 +32,7 @@ public class SchedulerActionServlet extends ServletBase {
 
 	@Override
 	protected void doGetAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerActionId = getParameterId(request, SchedulerAction.ID);
+		var schedulerActionId = getParameterInt(request, SchedulerAction.ID);
 		try (var session = db.openSession()) {
 
 			var schedulerActions = new ArrayList<SchedulerAction>();
@@ -69,7 +69,7 @@ public class SchedulerActionServlet extends ServletBase {
 
 	@Override
 	protected void doPostAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerActionId = getParameterId(request, SchedulerAction.ID);
+		var schedulerActionId = getParameterInt(request, SchedulerAction.ID);
 		if (schedulerActionId == null) {
 			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerAction.ID + "' parameter provided to update SchedulerAction", 400);
 			return;
@@ -111,7 +111,7 @@ public class SchedulerActionServlet extends ServletBase {
 
 	@Override
 	protected void doDeleteAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerActionId = getParameterId(request, SchedulerAction.ID);
+		var schedulerActionId = getParameterInt(request, SchedulerAction.ID);
 		if (schedulerActionId == null) {
 			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerAction.ID + "' parameter provided to delete SchedulerAction", 400);
 			return;

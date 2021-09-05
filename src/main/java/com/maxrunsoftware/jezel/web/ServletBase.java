@@ -18,53 +18,24 @@ package com.maxrunsoftware.jezel.web;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-
-import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.SettingService;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
 
-public abstract class ServletBase extends HttpServlet {
+public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletBase {
 	private static final long serialVersionUID = 7162466372715656028L;
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ServletBase.class);
 
 	protected SettingService settings;
 	protected RestClient client;
-	private final Object locker = new Object();
-	private Map<String, Object> services;
 
 	@Override
 	public void init() throws ServletException {
-		settings = getService(SettingService.class);
-		client = getService(RestClient.class);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected <T> T getService(Class<T> clazz) {
-		synchronized (locker) {
-			if (services == null) {
-				services = new CaseInsensitiveMap<String, Object>();
-
-				var ctx = getServletContext();
-				for (var attrName : Collections.list(ctx.getAttributeNames())) {
-					var attrVal = ctx.getAttribute(attrName);
-					if (attrVal != null) {
-						LOG.trace("Found attribute [" + attrName + "]: " + attrVal.getClass().getName());
-						services.put(attrName, attrVal);
-					}
-				}
-			}
-
-			var o = services.get(clazz.getName());
-			if (o == null) throw new IllegalArgumentException("No service found named " + clazz.getName());
-			return (T) o;
-		}
+		settings = getResource(SettingService.class);
+		client = getResource(RestClient.class);
 	}
 
 	protected void writeResponse(HttpServletResponse response, String html) {

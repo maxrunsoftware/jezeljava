@@ -18,13 +18,9 @@ package com.maxrunsoftware.jezel.view;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
 
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-
-import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import com.maxrunsoftware.jezel.BearerService;
 import com.maxrunsoftware.jezel.Constant;
@@ -32,16 +28,14 @@ import com.maxrunsoftware.jezel.DatabaseService;
 import com.maxrunsoftware.jezel.SettingService;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-public abstract class ServletBase extends HttpServlet {
+public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletBase {
 	private static final long serialVersionUID = 6575422778781011121L;
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ServletBase.class);
-	private Object locker = new Object();
-	private Map<String, Object> services = null;
+
 	protected HttpSession session;
 	protected SettingService settings;
 	protected DatabaseService db;
@@ -57,35 +51,13 @@ public abstract class ServletBase extends HttpServlet {
 
 	@Override
 	public void init() throws ServletException {
-		settings = getService(SettingService.class);
-		db = getService(DatabaseService.class);
-		bearer = getService(BearerService.class);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected <T> T getService(Class<T> clazz) {
-		synchronized (locker) {
-			if (services == null) {
-				services = new CaseInsensitiveMap<String, Object>();
-
-				var ctx = getServletContext();
-				for (var attrName : Collections.list(ctx.getAttributeNames())) {
-					var attrVal = ctx.getAttribute(attrName);
-					if (attrVal != null) {
-						LOG.trace("Found attribute [" + attrName + "]: " + attrVal.getClass().getName());
-						services.put(attrName, attrVal);
-					}
-				}
-			}
-
-			var o = services.get(clazz.getName());
-			if (o == null) throw new IllegalArgumentException("No service found named " + clazz.getName());
-			return (T) o;
-		}
+		settings = getResource(SettingService.class);
+		db = getResource(DatabaseService.class);
+		bearer = getResource(BearerService.class);
 	}
 
 	protected static void writeResponse(HttpServletResponse response, String json) {
-		writeResponse(response, json, HttpServletResponse.SC_OK);
+		writeResponse(response, json, HttpServletResponse.SC_OK, Constant.CONTENTTYPE_JSON);
 	}
 
 	protected static void writeResponse(HttpServletResponse response, JsonObject json) {
@@ -97,25 +69,11 @@ public abstract class ServletBase extends HttpServlet {
 	}
 
 	protected static void writeResponse(HttpServletResponse response, JsonObject json, int statusCode) {
-		writeResponse(response, toJsonString(json, true), statusCode);
+		writeResponse(response, toJsonString(json, true), statusCode, Constant.CONTENTTYPE_JSON);
 	}
 
 	protected static void writeResponse(HttpServletResponse response, JsonObjectBuilder json, int statusCode) {
-		writeResponse(response, toJsonString(json, true), statusCode);
-	}
-
-	protected static void writeResponse(HttpServletResponse response, String json, int statusCode) {
-		LOG.trace("Writing response [" + statusCode + "]: " + json);
-		response.setContentType(Constant.CONTENTTYPE_JSON);
-		response.setCharacterEncoding(Constant.ENCODING_UTF8);
-		response.setStatus(statusCode);
-		response.addHeader("Cache-Control", "no-cache");
-		response.addHeader("Content-Language", "en-US");
-		try {
-			response.getWriter().print(json);
-		} catch (IOException ioe) {
-			LOG.error("Error writing response", ioe);
-		}
+		writeResponse(response, toJsonString(json, true), statusCode, Constant.CONTENTTYPE_JSON);
 	}
 
 	protected static void writeResponse(HttpServletResponse response, String status, String message, int statusCode) {
@@ -123,26 +81,6 @@ public abstract class ServletBase extends HttpServlet {
 				.add(RESPONSE_STATUS, status)
 				.add(RESPONSE_MESSAGE, message);
 		writeResponse(response, json.build(), statusCode);
-	}
-
-	protected static Integer getParameterId(HttpServletRequest request, String idName) {
-		String val = trimOrNull(getParameter(request, idName));
-		if (val == null) return null;
-		try {
-			return Integer.parseInt(val);
-		} catch (Throwable t) {
-			return null;
-		}
-	}
-
-	protected static String getParameter(HttpServletRequest request, String name) {
-		name = trimOrNull(name);
-		if (name == null) return null;
-		name = name.toLowerCase();
-		for (var pName : Collections.list(request.getParameterNames())) {
-			if (pName.toLowerCase().equals(name)) return request.getParameter(pName);
-		}
-		return null;
 	}
 
 	private boolean authorize(HttpServletRequest request, HttpServletResponse response) {

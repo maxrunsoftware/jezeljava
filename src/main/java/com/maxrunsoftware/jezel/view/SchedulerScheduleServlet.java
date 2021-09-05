@@ -33,8 +33,8 @@ public class SchedulerScheduleServlet extends ServletBase {
 
 	@Override
 	protected void doGetAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerScheduleId = getParameterId(request, SchedulerSchedule.ID);
-		var schedulerJobId = getParameterId(request, SchedulerJob.ID);
+		var schedulerScheduleId = getParameterInt(request, SchedulerSchedule.ID);
+		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
 
 		try (var session = db.openSession()) {
 
@@ -72,7 +72,7 @@ public class SchedulerScheduleServlet extends ServletBase {
 
 	@Override
 	protected void doPutAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerJobId = getParameterId(request, SchedulerJob.ID);
+		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
 		if (schedulerJobId == null) {
 			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerJob.ID + "' parameter provided to create SchedulerSchedule", 400);
 			return;
@@ -101,7 +101,7 @@ public class SchedulerScheduleServlet extends ServletBase {
 
 	@Override
 	protected void doPostAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerScheduleId = getParameterId(request, SchedulerSchedule.ID);
+		var schedulerScheduleId = getParameterInt(request, SchedulerSchedule.ID);
 		if (schedulerScheduleId == null) {
 			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerSchedule.ID + "' parameter provided to update SchedulerSchedule", 400);
 			return;
@@ -188,7 +188,7 @@ public class SchedulerScheduleServlet extends ServletBase {
 
 	@Override
 	protected void doDeleteAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerScheduleId = getParameterId(request, SchedulerSchedule.ID);
+		var schedulerScheduleId = getParameterInt(request, SchedulerSchedule.ID);
 		if (schedulerScheduleId == null) {
 			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerSchedule.ID + "' parameter provided to delete SchedulerSchedule", 400);
 			return;

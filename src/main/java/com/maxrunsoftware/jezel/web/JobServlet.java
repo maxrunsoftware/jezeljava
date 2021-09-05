@@ -32,6 +32,9 @@ public class JobServlet extends ServletBase {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
+	}
+
+	private void doGetShowJobs(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		var headers = List.of("", "JobId", "Name", "Path", "Schedules", "Actions", "Logs", "Enabled");
 		List<SchedulerJob> jobs;
 		try {

@@ -32,7 +32,7 @@ public class SchedulerJobServlet extends ServletBase {
 
 	@Override
 	protected void doGetAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerJobId = getParameterId(request, SchedulerJob.ID);
+		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
 		try (var session = db.openSession()) {
 
 			var schedulerJobs = new ArrayList<SchedulerJob>();
@@ -71,7 +71,7 @@ public class SchedulerJobServlet extends ServletBase {
 
 	@Override
 	protected void doPostAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerJobId = getParameterId(request, SchedulerJob.ID);
+		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
 		if (schedulerJobId == null) {
 			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerJob.ID + "' parameter provided to update SchedulerJob", 400);
 			return;
@@ -113,7 +113,7 @@ public class SchedulerJobServlet extends ServletBase {
 
 	@Override
 	protected void doDeleteAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerJobId = getParameterId(request, SchedulerJob.ID);
+		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
 		if (schedulerJobId == null) {
 			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerJob.ID + "' parameter provided to delete SchedulerJob", 400);
 			return;
