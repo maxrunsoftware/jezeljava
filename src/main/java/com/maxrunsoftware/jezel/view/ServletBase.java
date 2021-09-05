@@ -168,7 +168,7 @@ public abstract class ServletBase extends HttpServlet {
 				.add(RESPONSE_STATUS, RESPONSE_STATUS_UNAUTHORIZED)
 				.add(RESPONSE_MESSAGE, errorMessage);
 
-		writeResponse(response, json);
+		writeResponse(response, json, 401);
 		return false;
 	}
 

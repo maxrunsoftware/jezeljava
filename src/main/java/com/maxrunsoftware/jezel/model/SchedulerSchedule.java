@@ -177,17 +177,32 @@ public class SchedulerSchedule implements JsonCodable {
 		var json = createObjectBuilder();
 		json.add(ID, getSchedulerScheduleId());
 		json.add(SchedulerJob.ID, getSchedulerJob().getSchedulerJobId());
-		json.add("isSunday", isSunday());
-		json.add("isMonday", isMonday());
-		json.add("isTuesday", isTuesday());
-		json.add("isWednesday", isWednesday());
-		json.add("isThursday", isThursday());
-		json.add("isFriday", isFriday());
-		json.add("isSaturday", isSaturday());
+		json.add("sunday", isSunday());
+		json.add("monday", isMonday());
+		json.add("tuesday", isTuesday());
+		json.add("wednesday", isWednesday());
+		json.add("thursday", isThursday());
+		json.add("friday", isFriday());
+		json.add("saturday", isSaturday());
 		json.add("hour", getHour());
 		json.add("minute", getMinute());
 		json.add("disabled", isDisabled());
 		return json.build();
+	}
+
+	@Override
+	public void fromJson(JsonObject o) {
+		this.setSchedulerScheduleId(o.getInt(ID));
+		this.setSunday(o.getBoolean("sunday"));
+		this.setMonday(o.getBoolean("monday"));
+		this.setTuesday(o.getBoolean("tuesday"));
+		this.setWednesday(o.getBoolean("wednesday"));
+		this.setThursday(o.getBoolean("thursday"));
+		this.setFriday(o.getBoolean("friday"));
+		this.setSaturday(o.getBoolean("saturday"));
+		this.setHour(o.getInt("hour"));
+		this.setMinute(o.getInt("minute"));
+		this.setDisabled(o.getBoolean("disabled"));
 	}
 
 	public void setDays(

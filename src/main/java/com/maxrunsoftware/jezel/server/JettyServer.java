@@ -109,7 +109,7 @@ public class JettyServer {
 		}
 
 		for (var page : pages) {
-			LOG.debug("Adding Page [" + page.path + "]: " + page.servlet.getClass().getName());
+			LOG.debug("Adding Page [" + page.path + "]: " + page.servlet.getName());
 			context.addServlet(page.servlet(), page.path());
 		}
 

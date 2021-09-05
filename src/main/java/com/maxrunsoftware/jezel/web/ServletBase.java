@@ -18,15 +18,54 @@ package com.maxrunsoftware.jezel.web;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import com.maxrunsoftware.jezel.Constant;
+import com.maxrunsoftware.jezel.SettingService;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
 
 public class ServletBase extends HttpServlet {
 	private static final long serialVersionUID = 7162466372715656028L;
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ServletBase.class);
+
+	protected SettingService settings;
+	protected RestClient client;
+	private final Object locker = new Object();
+	private Map<String, Object> services;
+
+	@Override
+	public void init() throws ServletException {
+		settings = getService(SettingService.class);
+		client = getService(RestClient.class);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected <T> T getService(Class<T> clazz) {
+		synchronized (locker) {
+			if (services == null) {
+				services = new CaseInsensitiveMap<String, Object>();
+
+				var ctx = getServletContext();
+				for (var attrName : Collections.list(ctx.getAttributeNames())) {
+					var attrVal = ctx.getAttribute(attrName);
+					if (attrVal != null) {
+						LOG.trace("Found attribute [" + attrName + "]: " + attrVal.getClass().getName());
+						services.put(attrName, attrVal);
+					}
+				}
+			}
+
+			var o = services.get(clazz.getName());
+			if (o == null) throw new IllegalArgumentException("No service found named " + clazz.getName());
+			return (T) o;
+		}
+	}
 
 	protected void writeResponse(HttpServletResponse response, String html) {
 		writeResponse(response, trimOrNull(getClass().getSimpleName().replace("Servlet", "")), html);
@@ -38,15 +77,50 @@ public class ServletBase extends HttpServlet {
 
 	protected void writeResponse(HttpServletResponse response, String title, String html, int statusCode) {
 		html = coalesce(trimOrNull(html), "Missing HTML");
+
 		var str = """
 				<html dir="ltr" lang="en">
 					<head>
 						<meta charset="utf-8">
 						<title>${title}</title>
 						<style>
+						.topnav {
+						  background-color: #333;
+						  overflow: hidden;
+						}
+
+						/* Style the links inside the navigation bar */
+						.topnav a {
+						  float: left;
+						  color: #f2f2f2;
+						  text-align: center;
+						  padding: 14px 16px;
+						  text-decoration: none;
+						  font-size: 17px;
+						}
+
+						/* Change the color of links on hover */
+						.topnav a:hover {
+						  background-color: #ddd;
+						  color: black;
+						}
+
+						/* Add a color to the active/current link */
+						.topnav a.active {
+						  background-color: #04AA6D;
+						  color: white;
+						}
 						</style>
 					</head>
 					<body>
+						<div class="topnav">
+							<a class="active" href="/">Home</a>
+							<a href="/jobs">Jobs</a>
+							<a href="/logs">Logs</a>
+							<a href="/logout">Logout</a>
+						</div>
+						<br>
+
 						${body}
 					</body>
 				</html>

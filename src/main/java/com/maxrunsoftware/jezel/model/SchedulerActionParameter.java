@@ -65,7 +65,7 @@ public class SchedulerActionParameter implements JsonCodable {
 	}
 
 	public void setName(String name) {
-		this.name = name;
+		this.name = trimOrNull(name);
 	}
 
 	@Column(length = 1000, nullable = false, unique = false)
@@ -99,6 +99,13 @@ public class SchedulerActionParameter implements JsonCodable {
 		json.add("value", coalesce(getValue(), ""));
 		json.add("disabled", isDisabled());
 		return json.build();
+	}
+
+	public void fromJson(JsonObject o) {
+		this.setSchedulerActionParameterId(o.getInt(ID));
+		this.setName(o.getString("name"));
+		this.setValue(o.getString("value"));
+		this.setDisabled(o.getBoolean("disabled"));
 	}
 
 	@Override

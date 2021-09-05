@@ -19,4 +19,6 @@ import javax.json.JsonObject;
 
 public interface JsonCodable {
 	public JsonObject toJson();
+
+	public void fromJson(JsonObject o);
 }

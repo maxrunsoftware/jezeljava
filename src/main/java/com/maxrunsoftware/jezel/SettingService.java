@@ -45,6 +45,18 @@ public interface SettingService {
 		return getEnvironmentVariable("JEZEL_RestPort", 8080);
 	}
 
+	public default String getRestUrl() {
+		return getEnvironmentVariable("JEZEL_RestUrl", "http://localhost:" + getRestPort());
+	}
+
+	public default String getRestUsername() {
+		return getEnvironmentVariable("JEZEL_RestUsername", "user");
+	}
+
+	public default String getRestPassword() {
+		return getEnvironmentVariable("JEZEL_RestPassword", "pass");
+	}
+
 	public default int getRestMaxThreads() {
 		return getEnvironmentVariable("JEZEL_RestMaxThreads", 100);
 	}
@@ -73,6 +85,10 @@ public interface SettingService {
 		return getEnvironmentVariable("JEZEL_DatabaseDir", "mem");
 	}
 
+	public default int getWebPort() {
+		return getEnvironmentVariable("JEZEL_WebPort", getRestPort() + 1);
+	}
+
 	public default int getWebMaxThreads() {
 		return getEnvironmentVariable("JEZEL_WebMaxThreads", 100);
 	}
@@ -89,8 +105,12 @@ public interface SettingService {
 		return getEnvironmentVariable("JEZEL_WebJoinThread", true);
 	}
 
-	public default boolean getWebIgnoreCredentials() {
-		return getEnvironmentVariable("JEZEL_WebIgnoreCredentials", true);
+	public default String getWebUsername() {
+		return getEnvironmentVariable("JEZEL_WebUsername", getRestUsername());
+	}
+
+	public default String getWebPassword() {
+		return getEnvironmentVariable("JEZEL_WebPassword", getRestPassword());
 	}
 
 	public default Map<String, Object> toMap() {

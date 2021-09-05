@@ -41,7 +41,12 @@
 			<artifactId>jetty-security</artifactId>
 			<version>11.0.6</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.apache.httpcomponents.client5</groupId>
+			<artifactId>httpclient5</artifactId>
+			<version>5.1</version>
+		</dependency>
+		
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>

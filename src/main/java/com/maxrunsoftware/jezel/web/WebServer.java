@@ -34,28 +34,30 @@ public class WebServer implements WebService {
 	private Server server;
 
 	private final SettingService settings;
+	private final RestClient client;
 
 	@Inject
-	public WebServer(SettingService settings) {
+	public WebServer(SettingService settings, RestClient client) {
 		this.settings = checkNotNull(settings);
+		this.client = checkNotNull(client);
 	}
 
 	@Override
 	public void start(boolean joinThread) throws Exception {
 		LOG.debug("Starting");
 		var server = new JettyServer();
-		server.setMaxThreads(settings.getRestMaxThreads());
-		server.setMinThreads(settings.getRestMinThreads());
-		server.setIdleTimeout(settings.getRestIdleTimeout());
-		server.setPort(settings.getRestPort());
+		server.setMaxThreads(settings.getWebMaxThreads());
+		server.setMinThreads(settings.getWebMinThreads());
+		server.setIdleTimeout(settings.getWebIdleTimeout());
+		server.setPort(settings.getWebPort());
 		server.setTempDirectory(settings.getDirTemp());
 		server.addResource(SettingService.class.getName(), settings);
-
+		server.addResource(RestClient.class.getName(), client);
 		for (var page : Constant.WEB_SERVLETS) {
 			server.addPage(page.servlet(), page.path());
 		}
 
-		server.addCredential("user", "pass");
+		server.addCredential(settings.getWebUsername(), settings.getWebPassword());
 
 		server.start(joinThread);
 	}

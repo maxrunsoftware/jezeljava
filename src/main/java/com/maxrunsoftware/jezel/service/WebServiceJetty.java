@@ -19,8 +19,6 @@ import static com.google.common.base.Preconditions.*;
 
 import javax.inject.Inject;
 
-import org.eclipse.jetty.server.Server;
-
 import com.maxrunsoftware.jezel.BearerService;
 import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.DatabaseService;
@@ -32,7 +30,7 @@ public class WebServiceJetty implements WebService {
 
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(WebServiceJetty.class);
 
-	private Server server;
+	private JettyServer server;
 
 	private final SettingService settings;
 	private final DatabaseService db;
@@ -48,7 +46,7 @@ public class WebServiceJetty implements WebService {
 	@Override
 	public void start(boolean joinThread) throws Exception {
 		LOG.debug("Starting");
-		var server = new JettyServer();
+		server = new JettyServer();
 		server.setMaxThreads(settings.getRestMaxThreads());
 		server.setMinThreads(settings.getRestMinThreads());
 		server.setIdleTimeout(settings.getRestIdleTimeout());

@@ -17,6 +17,7 @@ package com.maxrunsoftware.jezel.model;
 
 import static com.maxrunsoftware.jezel.Util.*;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.json.JsonObject;
@@ -64,6 +65,7 @@ public class SchedulerAction implements JsonCodable {
 	private Set<SchedulerActionParameter> schedulerActionParameters;
 
 	public Set<SchedulerActionParameter> getSchedulerActionParameters() {
+		if (schedulerActionParameters == null) schedulerActionParameters = new HashSet<SchedulerActionParameter>();
 		return schedulerActionParameters;
 	}
 
@@ -75,6 +77,7 @@ public class SchedulerAction implements JsonCodable {
 	private Set<CommandLogAction> commandLogActions;
 
 	public Set<CommandLogAction> getCommandLogActions() {
+		if (commandLogActions == null) commandLogActions = new HashSet<CommandLogAction>();
 		return commandLogActions;
 	}
 
@@ -131,6 +134,24 @@ public class SchedulerAction implements JsonCodable {
 		json.add("schedulerActionParameters", arrayBuilder);
 
 		return json.build();
+	}
+
+	@Override
+	public void fromJson(JsonObject o) {
+		this.setSchedulerActionId(o.getInt(ID));
+		this.setName(o.getString("name"));
+		this.setDescription(o.getString("description"));
+		this.setDisabled(o.getBoolean("disabled"));
+
+		var array = o.getJsonArray("schedulerActionParameters");
+		var h = new HashSet<SchedulerActionParameter>();
+		for (var item : array) {
+			var p = new SchedulerActionParameter();
+			p.fromJson(item.asJsonObject());
+			p.setSchedulerAction(this);
+			h.add(p);
+		}
+		this.setSchedulerActionParameters(h);
 	}
 
 	@Override

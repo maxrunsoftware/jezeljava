@@ -18,6 +18,7 @@ package com.maxrunsoftware.jezel.model;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.json.JsonObject;
@@ -78,6 +79,7 @@ public class CommandLogAction implements JsonCodable {
 	private Set<CommandLogMessage> commandLogMessages;
 
 	public Set<CommandLogMessage> getCommandLogMessages() {
+		if (commandLogMessages == null) commandLogMessages = new HashSet<CommandLogMessage>();
 		return commandLogMessages;
 	}
 
@@ -132,9 +134,29 @@ public class CommandLogAction implements JsonCodable {
 		for (var commandLogMessage : getCommandLogMessages()) {
 			arrayBuilder.add(commandLogMessage.toJson());
 		}
-		json.add("commandLogActions", arrayBuilder);
+		json.add("commandLogMessages", arrayBuilder);
 
 		return json.build();
+	}
+
+	@Override
+	public void fromJson(JsonObject o) {
+		this.setCommandLogActionId(o.getInt(ID));
+		var st = trimOrNull(o.getString("start"));
+		if (st != null) this.setStart(LocalDateTime.parse(st));
+		var en = trimOrNull(o.getString("end"));
+		if (en != null) this.setEnd(LocalDateTime.parse(en));
+		this.setIndex(o.getInt("index"));
+
+		var array = o.getJsonArray("commandLogMessages");
+		var hss = new HashSet<CommandLogMessage>();
+		for (var item : array) {
+			var p = new CommandLogMessage();
+			p.fromJson(item.asJsonObject());
+			p.setCommandLogAction(this);
+			hss.add(p);
+		}
+		this.setCommandLogMessages(hss);
 	}
 
 	@Override

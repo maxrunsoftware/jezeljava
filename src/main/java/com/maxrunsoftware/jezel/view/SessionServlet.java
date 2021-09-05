@@ -39,7 +39,32 @@ public class SessionServlet extends ServletBase {
 			return;
 		}
 
-		// TODO: Auth credentials
+		var user = trimOrNull(authUserPass.username);
+		if (user == null) {
+			LOG.debug("No username provided");
+			unauthorized(response);
+			return;
+		}
+
+		var pass = trimOrNull(authUserPass.password);
+		if (pass == null) {
+			LOG.debug("No password provided");
+			unauthorized(response);
+			return;
+		}
+
+		var settingUser = settings.getRestUsername();
+		var settingPass = settings.getRestPassword();
+
+		if (!settingUser.equalsIgnoreCase(user)) {
+			LOG.debug("Invalid username: " + user);
+			unauthorized(response);
+			return;
+		}
+		if (!settingPass.equals(pass)) {
+			LOG.debug("Invalid password: " + pass);
+			unauthorized(response);
+		}
 
 		authorized(response);
 	}

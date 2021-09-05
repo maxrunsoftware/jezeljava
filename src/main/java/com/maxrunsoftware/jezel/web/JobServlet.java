@@ -16,27 +16,54 @@
 package com.maxrunsoftware.jezel.web;
 
 import java.io.IOException;
+import java.util.List;
 
-import com.maxrunsoftware.jezel.Version;
+import com.maxrunsoftware.jezel.model.SchedulerJob;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public class HomeServlet extends ServletBase {
-
-	private static final long serialVersionUID = 2114495585770348816L;
+public class JobServlet extends ServletBase {
+	private static final long serialVersionUID = 6343839739720974399L;
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
 		String html = """
-				Jezel Job Scheduling Engine  v${version}  dev@maxrunsoftware.com
+				<table>
+				  <tr>
+				    <th>JobId</th>
+				    <th>Name</th>
+				    <th>Path</th>
+				    <th>Schedules</th>
+				    <th>Actions</th>
+				    <th>Logs</th>
+				  </tr>
+				  ${tableRows}
+				</table>
 				""";
-		html = html.replace("${version}", Version.VALUE);
+
+		List<SchedulerJob> jobs;
+		try {
+			jobs = client.getSchedulerJobs();
+		} catch (Exception e) {
+			throw new IOException(e);
+		}
+		var sb = new StringBuilder();
+		for (var job : jobs) {
+			sb.append("<tr>");
+			sb.append("  <td>" + job.getSchedulerJobId() + "</td>");
+			sb.append("  <td>" + job.getName() + "</td>");
+			sb.append("  <td>" + job.getPath() + "</td>");
+			sb.append("  <td>" + job.getSchedulerSchedules().size() + "</td>");
+			sb.append("  <td>" + job.getSchedulerActions().size() + "</td>");
+			sb.append("  <td>" + job.getCommandLogJobs().size() + "</td>");
+			sb.append("</tr>");
+		}
+		html = html.replace("${tableRows}", sb.toString());
 		// String html = "hello " + request.getUserPrincipal().getName();
 
 		writeResponse(response, html);
 	}
-
 }

@@ -29,8 +29,12 @@ public class LoginServlet extends ServletBase {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String html = """
 				<form method=POST action="/j_security_check">
-				   	<input type="text" name="j_username" />
-				   	<input type="password" name="j_password" />
+					<label for="j_username">Username: </label>
+				   	<input id="j_username" type="text" name="j_username" />
+				   	<br><br>
+					<label for="j_password">Password: </label>
+				   	<input id="j_password" type="password" name="j_password" />
+				   	<br><br>
 				   	<input type="submit" value="Login" />
 				</form>
 					""";

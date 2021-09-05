@@ -89,7 +89,7 @@ public class CommandLogMessage implements JsonCodable {
 	}
 
 	public void setMessage(String message) {
-		this.message = message;
+		this.message = trimOrNull(message);
 	}
 
 	@Column(length = 4000, nullable = true, unique = false)
@@ -100,7 +100,7 @@ public class CommandLogMessage implements JsonCodable {
 	}
 
 	public void setException(String exception) {
-		this.exception = exception;
+		this.exception = trimOrNull(exception);
 	}
 
 	@Column(nullable = false)
@@ -125,6 +125,17 @@ public class CommandLogMessage implements JsonCodable {
 		json.add("exception", coalesce(getException(), ""));
 		json.add("index", getIndex());
 		return json.build();
+	}
+
+	@Override
+	public void fromJson(JsonObject o) {
+		this.setCommandLogMessageId(o.getInt(ID));
+		this.setLevel(o.getString("level"));
+		var ts = trimOrNull(o.getString("timestamp"));
+		if (ts != null) this.setTimestamp(LocalDateTime.parse(ts));
+		this.setMessage(o.getString("message"));
+		this.setException(o.getString("exception"));
+		this.setIndex(o.getInt("index"));
 	}
 
 	@Override

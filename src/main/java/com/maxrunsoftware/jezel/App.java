@@ -23,7 +23,12 @@ import javax.inject.Inject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Singleton;
+import com.maxrunsoftware.jezel.model.SchedulerAction;
+import com.maxrunsoftware.jezel.model.SchedulerActionParameter;
+import com.maxrunsoftware.jezel.model.SchedulerJob;
+import com.maxrunsoftware.jezel.model.SchedulerSchedule;
 import com.maxrunsoftware.jezel.service.SettingServiceEnvironment;
+import com.maxrunsoftware.jezel.web.RestClient;
 import com.maxrunsoftware.jezel.web.WebServer;
 
 public class App {
@@ -57,7 +62,8 @@ public class App {
 		if (serverType == null) serverType = "Not Specified";
 
 		if (serverType.equalsIgnoreCase("web")) {
-			var webServer = new WebServer(new SettingServiceEnvironment());
+			var settings = new SettingServiceEnvironment();
+			var webServer = new WebServer(settings, new RestClient(settings));
 			try {
 				webServer.start(true);
 			} catch (Exception e) {
@@ -80,6 +86,7 @@ public class App {
 			Constant.setInjector(Guice.createInjector(module));
 
 			var app = Constant.getInstance(App.class);
+
 			app.run(args);
 
 		} else {
@@ -90,6 +97,7 @@ public class App {
 
 	private void run(String[] args) {
 		try {
+			populate();
 			var webjoinThread = settings.getRestJoinThread();
 
 			scheduler.start(webjoinThread);
@@ -108,6 +116,49 @@ public class App {
 			LOG.error("Error in REST server", e);
 		}
 
+	}
+
+	private void populate() {
+		var db = Constant.getInstance(DatabaseService.class);
+		try (var session = db.openSession()) {
+
+			for (int i = 0; i < randomInt(8, 10); i++) {
+				var j = new SchedulerJob();
+				j.setName(randomPick(Constant.NOUNS));
+				j.setPath("/dir" + randomInt(10, 99) + "/" + randomInt(1000, 9999));
+				j.setDisabled(randomBoolean());
+				j = getById(SchedulerJob.class, session, save(session, j));
+
+				for (int ii = 0; ii < randomInt(3, 5); ii++) {
+					var s = new SchedulerSchedule();
+					s.setDays(randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean());
+					s.setTime(randomInt(0, 23), randomInt(0, 59));
+					s.setDisabled(randomBoolean());
+					s.setSchedulerJob(j);
+					save(session, s);
+				}
+
+				for (int ii = 0; ii < randomInt(3, 5); ii++) {
+					var a = new SchedulerAction();
+					a.setName("SqlQuery");
+					a.setDescription(randomPick(Constant.NOUNS));
+					a.setDisabled(randomBoolean());
+					a.setSchedulerJob(j);
+					a = getById(SchedulerAction.class, session, save(session, a));
+
+					for (int iii = 0; iii < randomInt(5, 8); iii++) {
+						var ap = new SchedulerActionParameter();
+						ap.setName(randomPick(Constant.NOUNS));
+						ap.setValue(randomPick(Constant.NOUNS));
+						ap.setSchedulerAction(a);
+						save(session, a);
+					}
+
+				}
+
+			}
+
+		}
 	}
 
 }

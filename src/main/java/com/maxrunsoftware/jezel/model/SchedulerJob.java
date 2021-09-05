@@ -17,6 +17,7 @@ package com.maxrunsoftware.jezel.model;
 
 import static com.maxrunsoftware.jezel.Util.*;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.json.JsonObject;
@@ -55,6 +56,7 @@ public class SchedulerJob implements JsonCodable {
 	}
 
 	public void setSchedulerActions(Set<SchedulerAction> schedulerActions) {
+		if (schedulerActions == null) schedulerActions = new HashSet<SchedulerAction>();
 		this.schedulerActions = schedulerActions;
 	}
 
@@ -66,6 +68,7 @@ public class SchedulerJob implements JsonCodable {
 	}
 
 	public void setSchedulerSchedules(Set<SchedulerSchedule> schedulerSchedules) {
+		if (schedulerSchedules == null) schedulerSchedules = new HashSet<SchedulerSchedule>();
 		this.schedulerSchedules = schedulerSchedules;
 	}
 
@@ -73,6 +76,7 @@ public class SchedulerJob implements JsonCodable {
 	private Set<CommandLogJob> commandLogJobs;
 
 	public Set<CommandLogJob> getCommandLogJobs() {
+		if (commandLogJobs == null) commandLogJobs = new HashSet<CommandLogJob>();
 		return commandLogJobs;
 	}
 
@@ -134,6 +138,34 @@ public class SchedulerJob implements JsonCodable {
 		json.add("schedulerActions", arrayBuilder);
 
 		return json.build();
+	}
+
+	@Override
+	public void fromJson(JsonObject o) {
+		this.setSchedulerJobId(o.getInt(ID));
+		this.setName(o.getString("name"));
+		this.setPath(o.getString("path"));
+		this.setDisabled(o.getBoolean("disabled"));
+
+		var array = o.getJsonArray("schedulerSchedules");
+		var hss = new HashSet<SchedulerSchedule>();
+		for (var item : array) {
+			var p = new SchedulerSchedule();
+			p.fromJson(item.asJsonObject());
+			p.setSchedulerJob(this);
+			hss.add(p);
+		}
+		this.setSchedulerSchedules(hss);
+
+		array = o.getJsonArray("schedulerActions");
+		var hsa = new HashSet<SchedulerAction>();
+		for (var item : array) {
+			var p = new SchedulerAction();
+			p.fromJson(item.asJsonObject());
+			p.setSchedulerJob(this);
+			hsa.add(p);
+		}
+		this.setSchedulerActions(hsa);
 	}
 
 	@Override

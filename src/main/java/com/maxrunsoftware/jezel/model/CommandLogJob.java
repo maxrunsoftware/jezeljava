@@ -18,6 +18,7 @@ package com.maxrunsoftware.jezel.model;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.json.JsonObject;
@@ -54,6 +55,7 @@ public class CommandLogJob implements JsonCodable {
 	private Set<CommandLogAction> commandLogActions;
 
 	public Set<CommandLogAction> getCommandLogActions() {
+		if (commandLogActions == null) commandLogActions = new HashSet<CommandLogAction>();
 		return commandLogActions;
 	}
 
@@ -110,6 +112,26 @@ public class CommandLogJob implements JsonCodable {
 		json.add("commandLogActions", arrayBuilder);
 
 		return json.build();
+	}
+
+	@Override
+	public void fromJson(JsonObject o) {
+		this.setCommandLogJobId(o.getInt(ID));
+		var st = trimOrNull(o.getString("start"));
+		if (st != null) this.setStart(LocalDateTime.parse(st));
+		var en = trimOrNull(o.getString("end"));
+		if (en != null) this.setEnd(LocalDateTime.parse(en));
+
+		var array = o.getJsonArray("commandLogActions");
+		var hss = new HashSet<CommandLogAction>();
+		for (var item : array) {
+			var p = new CommandLogAction();
+			p.fromJson(item.asJsonObject());
+			p.setCommandLogJob(this);
+			hss.add(p);
+		}
+		this.setCommandLogActions(hss);
+
 	}
 
 	@Override
