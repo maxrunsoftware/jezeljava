@@ -115,8 +115,8 @@ public final class Util {
 
 	public static final boolean parseBoolean(String s) {
 		s = s.toLowerCase();
-		if (s.equals("true") || s.equals("t") || s.equals("yes") || s.equals("y") || s.equals("1")) return true;
-		if (s.equals("false") || s.equals("f") || s.equals("no") || s.equals("n") || s.equals("0")) return false;
+		if (s.equals("true") || s.equals("t") || s.equals("yes") || s.equals("y") || s.equals("1") || s.equals("on")) return true;
+		if (s.equals("false") || s.equals("f") || s.equals("no") || s.equals("n") || s.equals("0") || s.equals("off")) return false;
 		throw new IllegalArgumentException("Could not parse '" + s + "' to boolean");
 	}
 

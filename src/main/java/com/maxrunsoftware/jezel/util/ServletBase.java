@@ -29,7 +29,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public class ServletBase extends HttpServlet {
+public abstract class ServletBase extends HttpServlet {
 	private static final long serialVersionUID = 2411514340765948727L;
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ServletBase.class);
 	private Object locker = new Object();
@@ -57,13 +57,23 @@ public class ServletBase extends HttpServlet {
 		}
 	}
 
-	protected static Integer getParameterInt(HttpServletRequest request, String idName) {
-		String val = trimOrNull(getParameter(request, idName));
+	protected static Integer getParameterInt(HttpServletRequest request, String name) {
+		String val = trimOrNull(getParameter(request, name));
 		if (val == null) return null;
 		try {
 			return Integer.parseInt(val);
 		} catch (Throwable t) {
 			return null;
+		}
+	}
+
+	protected static boolean getParameterBool(HttpServletRequest request, String name) {
+		String val = trimOrNull(getParameter(request, name));
+		if (val == null) return false;
+		try {
+			return parseBoolean(val);
+		} catch (Throwable t) {
+			return false;
 		}
 	}
 

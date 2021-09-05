@@ -36,7 +36,7 @@ public class HomeServlet extends ServletBase {
 		html = html.replace("${version}", Version.VALUE);
 		// String html = "hello " + request.getUserPrincipal().getName();
 
-		writeResponse(response, html);
+		writeResponse(response, "Home", html, 200);
 	}
 
 	@Override

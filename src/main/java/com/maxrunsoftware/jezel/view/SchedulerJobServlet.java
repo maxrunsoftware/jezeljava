@@ -89,10 +89,10 @@ public class SchedulerJobServlet extends ServletBase {
 				LOG.debug("Updating SchedulerJob[" + schedulerJobId + "] [name] from " + schedulerJob.getName() + " to " + name);
 				schedulerJob.setName(name);
 			}
-			var path = trimOrNull(request.getParameter("path"));
-			if (path != null) {
-				LOG.debug("Updating SchedulerJob[" + schedulerJobId + "] [path] from " + schedulerJob.getPath() + " to " + path);
-				schedulerJob.setPath(path);
+			var group = trimOrNull(request.getParameter("group"));
+			if (group != null) {
+				LOG.debug("Updating SchedulerJob[" + schedulerJobId + "] [group] from " + schedulerJob.getGroup() + " to " + group);
+				schedulerJob.setGroup(group);
 			}
 			var disabled = trimOrNull(request.getParameter("disabled"));
 			if (disabled != null) {
@@ -100,7 +100,7 @@ public class SchedulerJobServlet extends ServletBase {
 				schedulerJob.setDisabled(parseBoolean(disabled));
 			}
 
-			if (name != null || path != null || disabled != null) {
+			if (name != null || group != null || disabled != null) {
 				save(session, schedulerJob);
 				writeResponse(response, RESPONSE_STATUS_SUCCESS, "SchedulerJob[" + schedulerJobId + "] successfully updated", 200);
 			} else {

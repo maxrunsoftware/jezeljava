@@ -125,7 +125,7 @@ public class App {
 			for (int i = 0; i < randomInt(8, 10); i++) {
 				var j = new SchedulerJob();
 				j.setName(randomPick(Constant.NOUNS));
-				j.setPath("/dir" + randomInt(10, 99) + "/" + randomInt(1000, 9999));
+				j.setGroup(randomPick("group1", "group2", "group3"));
 				j.setDisabled(randomBoolean());
 				j = getById(SchedulerJob.class, session, save(session, j));
 

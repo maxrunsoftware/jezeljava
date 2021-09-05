@@ -88,22 +88,22 @@ public class SchedulerJob implements JsonCodable {
 	private String name;
 
 	public String getName() {
-		return name;
+		return trimOrNull(name);
 	}
 
 	public void setName(String name) {
-		this.name = name;
+		this.name = trimOrNull(name);
 	}
 
-	@Column(length = 1000, nullable = true, unique = false)
-	private String path;
+	@Column(name = "grouping", length = 200, nullable = true, unique = false)
+	private String group;
 
-	public String getPath() {
-		return path;
+	public String getGroup() {
+		return trimOrNull(group);
 	}
 
-	public void setPath(String path) {
-		this.path = path;
+	public void setGroup(String group) {
+		this.group = trimOrNull(group);
 	}
 
 	@Column(nullable = false)
@@ -122,7 +122,7 @@ public class SchedulerJob implements JsonCodable {
 		var json = createObjectBuilder();
 		json.add(ID, getSchedulerJobId());
 		json.add("name", coalesce(getName(), ""));
-		json.add("path", coalesce(getPath(), ""));
+		json.add("group", coalesce(getGroup(), ""));
 		json.add("disabled", isDisabled());
 
 		var arrayBuilder = createArrayBuilder();
@@ -144,7 +144,7 @@ public class SchedulerJob implements JsonCodable {
 	public void fromJson(JsonObject o) {
 		this.setSchedulerJobId(o.getInt(ID));
 		this.setName(o.getString("name"));
-		this.setPath(o.getString("path"));
+		this.setGroup(o.getString("group"));
 		this.setDisabled(o.getBoolean("disabled"));
 
 		var array = o.getJsonArray("schedulerSchedules");

@@ -29,7 +29,7 @@ public class LogoutServlet extends ServletBase {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		request.getSession().invalidate();
 		String html = "Successfully logged out";
-		writeResponse(response, html);
+		writeResponse(response, "Logout", html, 200);
 	}
 
 	@Override

@@ -55,7 +55,6 @@ public class RestClient {
 	}
 
 	public ImmutableList<SchedulerJob> getSchedulerJobs() throws Exception {
-		if (bearer == null) login();
 		var response = get(Verb.GET, getHost() + "job");
 		var o = response.jsonObject;
 		var array = o.getJsonArray("schedulerJobs");
@@ -67,6 +66,19 @@ public class RestClient {
 			lb.add(sj);
 		}
 		return lb.build();
+	}
+
+	public SchedulerJob getSchedulerJob(int schedulerJobId) throws Exception {
+		var response = get(Verb.GET, getHost() + "job?schedulerJobId=" + schedulerJobId);
+		var o = response.jsonObject;
+		var array = o.getJsonArray("schedulerJobs");
+		for (var val : array) {
+			var oo = val.asJsonObject();
+			var sj = new SchedulerJob();
+			sj.fromJson(oo);
+			return sj;
+		}
+		return null;
 	}
 
 	private void login() throws Exception {

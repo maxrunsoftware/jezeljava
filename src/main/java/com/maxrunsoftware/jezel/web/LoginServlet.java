@@ -39,7 +39,7 @@ public class LoginServlet extends ServletBase {
 				</form>
 					""";
 
-		writeResponse(response, html);
+		writeResponse(response, "Login", html, 200);
 	}
 
 	@Override
