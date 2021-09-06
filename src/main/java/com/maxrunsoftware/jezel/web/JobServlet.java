@@ -30,56 +30,48 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class JobServlet extends ServletBase {
 	private static final long serialVersionUID = 6343839739720974399L;
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(JobServlet.class);
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
 		if (schedulerJobId == null) {
-			doGetShowJobs(request, response);
+			doGetShowJobAll(request, response);
 		} else {
-			doGetShowJob(request, response, schedulerJobId);
+			doGetShowJobSingle(request, response, schedulerJobId);
 		}
 	}
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerJobId = getParameter(request, "schedulerJobId");
+		var schedulerJobId = getParameterInt(request, "schedulerJobId");
+		LOG.debug("schedulerJobId: " + schedulerJobId);
 		var name = getParameter(request, "schedulerJobName");
+		LOG.debug("name: " + name);
 		var group = getParameter(request, "schedulerJobGroup");
-		var enabled = getParameter(request, "schedulerJobEnabled");
+		LOG.debug("group: " + group);
+		var enabled = getParameterBool(request, "schedulerJobEnabled");
+		LOG.debug("enabled: " + enabled);
 
-		var title = "Job[" + schedulerJobId + "]";
-		var html = p(
-				text("SchedulerJobId: " + schedulerJobId),
-				br(),
-				text("Name: " + name),
-				br(),
-				text("Group: " + group),
-				br(),
-				text("Enabled: " + enabled)
+		data.updateSchedulerJob(schedulerJobId, name, group, !enabled);
 
-		);
-
-		writeResponse(response, title, html.renderFormatted(), 200);
+		doGetShowJobAll(request, response);
 
 	}
 
-	private void doGetShowJob(HttpServletRequest request, HttpServletResponse response, int schedulerJobId) throws ServletException, IOException {
+	private void doGetShowJobSingle(HttpServletRequest request, HttpServletResponse response, int schedulerJobId) throws ServletException, IOException {
 
 		var title = "Job[" + schedulerJobId + "]";
 
-		SchedulerJob job;
-		try {
-			job = client.getSchedulerJob(schedulerJobId);
-		} catch (Exception e) {
-			throw new IOException(e);
-		}
+		var jobs = data.getSchedulerJob(schedulerJobId);
 
-		if (job == null) {
+		if (jobs.size() == 0) {
 			var html = "<h2>" + title + " not found<h2>";
 			writeResponse(response, title, html, 404);
 			return;
 		}
+
+		var job = jobs.get(0);
 
 		var html = form(
 				text("Job[" + schedulerJobId + "]"),
@@ -103,15 +95,9 @@ public class JobServlet extends ServletBase {
 
 	}
 
-	private void doGetShowJobs(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	private void doGetShowJobAll(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		var headers = List.of("", "JobId", "Name", "Group", "Schedules", "Actions", "Logs", "Enabled");
-		List<SchedulerJob> jobsAll;
-		try {
-			jobsAll = client.getSchedulerJobs();
-		} catch (Exception e) {
-			throw new IOException(e);
-		}
-
+		var jobsAll = data.getSchedulerJob(null);
 		var map = new TreeMap<String, ArrayList<SchedulerJob>>();
 		for (var job : jobsAll) {
 			var key = job.getGroup();
@@ -137,13 +123,13 @@ public class JobServlet extends ServletBase {
 							td("" + i.getSchedulerJobId()),
 							td("" + i.getName()),
 							td("" + i.getGroup()),
-							td("" + i.getSchedulerSchedules().size()),
+							td(a("" + i.getSchedulerSchedules().size()).withHref("/jobs/schedules?" + SchedulerJob.ID + "=" + i.getSchedulerJobId())),
 							td("" + i.getSchedulerActions().size()),
 							td("" + i.getCommandLogJobs().size()),
 							td(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(!i.isDisabled())
 							// End of row
 							)))));
-			sb.append(table);
+			sb.append(table.renderFormatted());
 			sb.append("</p><br><br>");
 		}
 		writeResponse(response, "Jobs", sb.toString(), 200);

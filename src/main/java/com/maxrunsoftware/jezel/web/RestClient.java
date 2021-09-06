@@ -18,6 +18,8 @@ package com.maxrunsoftware.jezel.web;
 import static com.google.common.base.Preconditions.*;
 import static com.maxrunsoftware.jezel.Util.*;
 
+import java.io.IOException;
+
 import javax.json.JsonObject;
 
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
@@ -32,11 +34,10 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuil
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
 
-import com.google.common.collect.ImmutableList;
 import com.maxrunsoftware.jezel.SettingService;
-import com.maxrunsoftware.jezel.model.SchedulerJob;
 
 public class RestClient {
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(RestClient.class);
@@ -54,32 +55,7 @@ public class RestClient {
 		return h;
 	}
 
-	public ImmutableList<SchedulerJob> getSchedulerJobs() throws Exception {
-		var response = get(Verb.GET, getHost() + "job");
-		var o = response.jsonObject;
-		var array = o.getJsonArray("schedulerJobs");
-		var lb = ImmutableList.<SchedulerJob>builder();
-		for (var val : array) {
-			var oo = val.asJsonObject();
-			var sj = new SchedulerJob();
-			sj.fromJson(oo);
-			lb.add(sj);
-		}
-		return lb.build();
-	}
-
-	public SchedulerJob getSchedulerJob(int schedulerJobId) throws Exception {
-		var response = get(Verb.GET, getHost() + "job?schedulerJobId=" + schedulerJobId);
-		var o = response.jsonObject;
-		var array = o.getJsonArray("schedulerJobs");
-		for (var val : array) {
-			var oo = val.asJsonObject();
-			var sj = new SchedulerJob();
-			sj.fromJson(oo);
-			return sj;
-		}
-		return null;
-	}
+	public static record ParamNameValue(String key, Object value) {}
 
 	private void login() throws Exception {
 		var response = get(Verb.POST, getHost() + "session", settings.getRestUsername(), settings.getRestPassword());
@@ -97,33 +73,52 @@ public class RestClient {
 		return get(verb, host, null, null, bearer);
 	}
 
-	private Response get(Verb verb, String host) throws Exception {
-		if (bearer == null) login();
-		var response = get(verb, host, bearer);
-		if (response.code == 401) {
-			// Old bearer token, get a new one
-			login();
-		}
-		response = get(verb, host, bearer);
-		if (response.code == 401) {
-			// Bad username or password
-			var msg = "Received 401 attempting to login";
-			if (response.jsonObject != null) {
-				var jmsg = trimOrNull(response.jsonObject.getString("message"));
-				if (jmsg != null) msg = msg + ": " + jmsg;
-			}
-			throw new Exception(msg);
-		}
+	public Response get(Verb verb, String hostSuffix, ParamNameValue... params) throws IOException {
+		var host = getHost();
+		host = host + hostSuffix;
+		try {
+			if (bearer == null) login();
 
-		return response;
+			var uribuilder = new URIBuilder();
+			boolean foundOne = false;
+			for (var paramNameValue : params) {
+				if (paramNameValue.value != null) {
+					uribuilder = uribuilder.addParameter(paramNameValue.key, paramNameValue.value.toString());
+					foundOne = true;
+				}
+			}
+
+			if (foundOne) { host = host + uribuilder.toString(); }
+
+			var response = get(verb, host, bearer);
+			if (response.code == 401) {
+				// Old bearer token, get a new one
+				login();
+			}
+			response = get(verb, host, bearer);
+			if (response.code == 401) {
+				// Bad username or password
+				var msg = "Received 401 attempting to login";
+				if (response.jsonObject != null) {
+					var jmsg = trimOrNull(response.jsonObject.getString("message"));
+					if (jmsg != null) msg = msg + ": " + jmsg;
+				}
+				throw new Exception(msg);
+			}
+
+			return response;
+		} catch (Exception e) {
+			throw new IOException(e);
+		}
 	}
 
-	private static enum Verb {
+	public static enum Verb {
 		GET, POST, PUT, DELETE
 	}
 
 	private Response get(Verb verb, String host, String username, String password, String bearer) throws Exception {
 		checkNotNull(host);
+
 		HttpUriRequestBase action;
 		if (verb.equals(Verb.DELETE)) action = new HttpDelete(host);
 		else if (verb.equals(Verb.POST)) action = new HttpPost(host);

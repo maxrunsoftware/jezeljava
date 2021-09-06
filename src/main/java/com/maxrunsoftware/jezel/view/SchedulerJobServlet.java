@@ -47,7 +47,7 @@ public class SchedulerJobServlet extends ServletBase {
 					.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)
 					.add(RESPONSE_MESSAGE, "Found " + schedulerJobs.size() + " SchedulerJobs");
 
-			json.add(SchedulerJob.NAME + "s", createArrayBuilder(schedulerJobs));
+			json.add(SchedulerJob.NAME, createArrayBuilder(schedulerJobs));
 			writeResponse(response, json);
 		}
 	}

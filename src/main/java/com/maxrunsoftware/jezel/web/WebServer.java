@@ -34,12 +34,12 @@ public class WebServer implements WebService {
 	private Server server;
 
 	private final SettingService settings;
-	private final RestClient client;
+	private final DataService data;
 
 	@Inject
-	public WebServer(SettingService settings, RestClient client) {
+	public WebServer(SettingService settings, DataService data) {
 		this.settings = checkNotNull(settings);
-		this.client = checkNotNull(client);
+		this.data = checkNotNull(data);
 	}
 
 	@Override
@@ -52,7 +52,7 @@ public class WebServer implements WebService {
 		server.setPort(settings.getWebPort());
 		server.setTempDirectory(settings.getDirTemp());
 		server.addResource(SettingService.class.getName(), settings);
-		server.addResource(RestClient.class.getName(), client);
+		server.addResource(DataService.class.getName(), data);
 		for (var page : Constant.WEB_SERVLETS) {
 			server.addPage(page.servlet(), page.path());
 		}

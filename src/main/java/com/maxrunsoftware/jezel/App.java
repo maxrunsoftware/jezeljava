@@ -28,6 +28,7 @@ import com.maxrunsoftware.jezel.model.SchedulerActionParameter;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
 import com.maxrunsoftware.jezel.model.SchedulerSchedule;
 import com.maxrunsoftware.jezel.service.SettingServiceEnvironment;
+import com.maxrunsoftware.jezel.web.DataService;
 import com.maxrunsoftware.jezel.web.RestClient;
 import com.maxrunsoftware.jezel.web.WebServer;
 
@@ -51,6 +52,7 @@ public class App {
 	}
 
 	public static void main(String[] args) {
+
 		var settingService = new SettingService() {};
 		LogSetup.initialize(settingService.getLoggingLevel(), settingService.getLoggingLevelLibs());
 		LOG.info("Jezel Job Scheduling Engine  v" + Version.VALUE + "  dev@maxrunsoftware.com");
@@ -63,7 +65,7 @@ public class App {
 
 		if (serverType.equalsIgnoreCase("web")) {
 			var settings = new SettingServiceEnvironment();
-			var webServer = new WebServer(settings, new RestClient(settings));
+			var webServer = new WebServer(settings, new DataService(new RestClient(settings)));
 			try {
 				webServer.start(true);
 			} catch (Exception e) {

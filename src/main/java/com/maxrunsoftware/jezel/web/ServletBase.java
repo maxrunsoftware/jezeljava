@@ -30,12 +30,12 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ServletBase.class);
 
 	protected SettingService settings;
-	protected RestClient client;
+	protected DataService data;
 
 	@Override
 	public void init() throws ServletException {
 		settings = getResource(SettingService.class);
-		client = getResource(RestClient.class);
+		data = getResource(DataService.class);
 	}
 
 	protected void writeResponse(HttpServletResponse response, String html) {

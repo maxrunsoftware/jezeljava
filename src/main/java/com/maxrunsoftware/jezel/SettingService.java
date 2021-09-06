@@ -78,7 +78,7 @@ public interface SettingService {
 	}
 
 	public default boolean getRestShowRest() {
-		return getEnvironmentVariable("JEZEL_RestShowRest", false);
+		return getEnvironmentVariable("JEZEL_RestShowRest", true);
 	}
 
 	public default int getSchedulerThreads() {

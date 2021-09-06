@@ -17,6 +17,8 @@ package com.maxrunsoftware.jezel.model;
 
 import static com.maxrunsoftware.jezel.Util.*;
 
+import java.util.Comparator;
+
 import javax.json.JsonObject;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -33,6 +35,16 @@ public class SchedulerSchedule implements JsonCodable {
 
 	public static final String NAME = "schedulerSchedule";
 	public static final String ID = NAME + "Id";
+
+	public static final Comparator<SchedulerSchedule> SORT_ID = new Comparator<SchedulerSchedule>() {
+		@Override
+		public int compare(SchedulerSchedule o1, SchedulerSchedule o2) {
+			if (o1 == o2) return 0;
+			if (o1 == null) return -1;
+			if (o2 == null) return 1;
+			return Integer.valueOf(o1.getSchedulerScheduleId()).compareTo(o2.getSchedulerScheduleId());
+		}
+	};
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)

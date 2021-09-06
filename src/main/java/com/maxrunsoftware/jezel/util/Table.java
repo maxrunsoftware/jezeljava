@@ -21,6 +21,7 @@ import static com.maxrunsoftware.jezel.Util.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
@@ -43,6 +44,19 @@ public class Table {
 		this.columns = checkNotNull(columns);
 		this.rows = checkNotNull(rows);
 
+	}
+
+	public static Table parse(Iterable<String> columns, Iterable<List<Object>> rows) {
+		var cols = ImmutableList.copyOf(columns);
+		var b = ImmutableList.<ImmutableList<String>>builder();
+		for (var row : rows) {
+			var bb = ImmutableList.<String>builder();
+			for (var cell : row) {
+				bb.add(cell == null ? null : cell.toString());
+			}
+			b.add(bb.build());
+		}
+		return new Table(cols, b.build());
 	}
 
 	public static Table parse(ResultSet resultSet) throws SQLException {
@@ -93,5 +107,32 @@ public class Table {
 			isResultSet = statement.getMoreResults();
 		}
 		return tablesBuilder.build();
+	}
+
+	public String toHtml() {
+		var sb = new StringBuilder();
+		sb.append("<table>");
+		sb.append("<thead>");
+		sb.append("<tr>");
+		for (var col : getColumns()) {
+			sb.append("<th>");
+			sb.append(coalesce(col, ""));
+			sb.append("</th>");
+		}
+		sb.append("</tr>");
+		sb.append("</thead>");
+		sb.append("<tbody>");
+		for (var row : getRows()) {
+			sb.append("<tr>");
+			for (var cell : row) {
+				sb.append("<td>");
+				sb.append(coalesce(cell, ""));
+				sb.append("</td>");
+			}
+			sb.append("</tr>");
+		}
+		sb.append("</tbody>");
+		sb.append("</table>");
+		return sb.toString();
 	}
 }

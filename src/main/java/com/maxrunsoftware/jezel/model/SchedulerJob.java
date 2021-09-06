@@ -17,6 +17,7 @@ package com.maxrunsoftware.jezel.model;
 
 import static com.maxrunsoftware.jezel.Util.*;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,6 +36,26 @@ public class SchedulerJob implements JsonCodable {
 
 	public static final String NAME = "schedulerJob";
 	public static final String ID = NAME + "Id";
+
+	public static final Comparator<SchedulerJob> SORT_ID = new Comparator<SchedulerJob>() {
+		@Override
+		public int compare(SchedulerJob o1, SchedulerJob o2) {
+			if (o1 == o2) return 0;
+			if (o1 == null) return -1;
+			if (o2 == null) return 1;
+			return Integer.valueOf(o1.getSchedulerJobId()).compareTo(o2.getSchedulerJobId());
+		}
+	};
+
+	public static final Comparator<SchedulerJob> SORT_GROUP = new Comparator<SchedulerJob>() {
+		@Override
+		public int compare(SchedulerJob o1, SchedulerJob o2) {
+			if (o1 == o2) return 0;
+			if (o1 == null) return -1;
+			if (o2 == null) return 1;
+			return coalesce(o1.getGroup(), "").toLowerCase().compareTo(coalesce(o2.getGroup(), "").toLowerCase());
+		}
+	};
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
