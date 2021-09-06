@@ -178,6 +178,7 @@ public class SchedulerScheduleServlet extends ServletBase {
 					|| disabled != null) {
 				save(session, schedulerSchedule);
 				writeResponse(response, RESPONSE_STATUS_SUCCESS, "SchedulerSchedule[" + schedulerScheduleId + "] successfully updated", 200);
+				scheduler.sync(schedulerSchedule.getSchedulerJob().getSchedulerJobId());
 			} else {
 				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerSchedule[" + schedulerScheduleId + "] nothing provided to update", 400);
 			}
@@ -194,9 +195,13 @@ public class SchedulerScheduleServlet extends ServletBase {
 			return;
 		}
 		try (var session = db.openSession()) {
+			var schedulerSchedule = getById(SchedulerSchedule.class, session, schedulerScheduleId);
+			if (schedulerSchedule == null) { writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerSchedule[" + schedulerScheduleId + "] does not exist", 404); }
+			var schedulerJobId = schedulerSchedule.getSchedulerJob().getSchedulerJobId();
 			var result = delete(SchedulerSchedule.class, session, schedulerScheduleId);
 			if (result) {
 				writeResponse(response, RESPONSE_STATUS_SUCCESS, "SchedulerSchedule[" + schedulerScheduleId + "] successfully deleted", 200);
+				scheduler.sync(schedulerJobId);
 			} else {
 				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerSchedule[" + schedulerScheduleId + "] does not exist", 404);
 			}

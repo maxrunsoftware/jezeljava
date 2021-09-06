@@ -213,8 +213,8 @@ public class QuartzServer {
 	private int threadCount;
 
 	public void start() throws SchedulerException {
-		var s = scheduler;
-		if (s != null) { stop(); }
+		if (scheduler != null) { stop(); }
+		LOG.debug("Starting: " + getClass().getSimpleName());
 
 		// http://www.quartz-scheduler.org/documentation/quartz-2.0.2/configuration/
 		var props = new Properties();
@@ -235,6 +235,7 @@ public class QuartzServer {
 		});
 		LOG.debug("Starting Quartz");
 		scheduler.start();
+		LOG.debug("Started: " + getClass().getSimpleName());
 	}
 
 	public void stop() throws SchedulerException {

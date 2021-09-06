@@ -22,6 +22,7 @@ import javax.inject.Inject;
 import com.maxrunsoftware.jezel.BearerService;
 import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.DatabaseService;
+import com.maxrunsoftware.jezel.SchedulerService;
 import com.maxrunsoftware.jezel.SettingService;
 import com.maxrunsoftware.jezel.WebService;
 import com.maxrunsoftware.jezel.server.JettyServer;
@@ -35,12 +36,14 @@ public class WebServiceJetty implements WebService {
 	private final SettingService settings;
 	private final DatabaseService db;
 	private final BearerService bearer;
+	private final SchedulerService scheduler;
 
 	@Inject
-	public WebServiceJetty(SettingService settings, DatabaseService db, BearerService bearer) {
+	public WebServiceJetty(SettingService settings, DatabaseService db, BearerService bearer, SchedulerService scheduler) {
 		this.settings = checkNotNull(settings);
 		this.db = checkNotNull(db);
 		this.bearer = checkNotNull(bearer);
+		this.scheduler = checkNotNull(scheduler);
 	}
 
 	@Override
@@ -56,6 +59,7 @@ public class WebServiceJetty implements WebService {
 		server.addResource(SettingService.class.getName(), settings);
 		server.addResource(DatabaseService.class.getName(), db);
 		server.addResource(BearerService.class.getName(), bearer);
+		server.addResource(SchedulerService.class.getName(), scheduler);
 
 		for (var page : Constant.REST_SERVLETS) {
 			server.addPage(page.servlet(), page.path());

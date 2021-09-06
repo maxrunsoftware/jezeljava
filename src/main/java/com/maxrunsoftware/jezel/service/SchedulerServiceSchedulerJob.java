@@ -20,7 +20,11 @@ import static com.maxrunsoftware.jezel.Util.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import javax.inject.Inject;
 
 import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.DatabaseService;
@@ -67,6 +71,7 @@ public class SchedulerServiceSchedulerJob {
 
 	private final DatabaseService db;
 
+	@Inject
 	public SchedulerServiceSchedulerJob(DatabaseService db) {
 		this.db = checkNotNull(db);
 	}
@@ -107,49 +112,64 @@ public class SchedulerServiceSchedulerJob {
 		return successfulExection;
 	}
 
+	private static final Object locker = new Object();
+	private static final Set<Integer> executingJobs = new HashSet<Integer>();
+
 	public void execute(final int schedulerJobId) {
-		int commandLogJobId;
-		var actions = new ArrayList<ActionItem>();
-		String schedulerJobName;
-		try (var session = db.openSession()) {
-			var schedulerJob = getById(SchedulerJob.class, session, schedulerJobId);
-			if (schedulerJob == null) {
-				LOG.warn("Cannot execute non-existant SchedulerJob[" + schedulerJobId + "]");
+		synchronized (locker) {
+			if (!executingJobs.add(schedulerJobId)) {
+				LOG.warn("SchedulerJob[" + schedulerJobId + "] already executing so skipping execution");
 				return;
 			}
+		}
+		try {
+			int commandLogJobId;
+			var actions = new ArrayList<ActionItem>();
+			String schedulerJobName;
+			try (var session = db.openSession()) {
+				var schedulerJob = getById(SchedulerJob.class, session, schedulerJobId);
+				if (schedulerJob == null) {
+					LOG.warn("Cannot execute non-existant SchedulerJob[" + schedulerJobId + "]");
+					return;
+				}
 
-			schedulerJobName = schedulerJob.getName();
-			if (schedulerJob.isDisabled()) {
-				LOG.info("Skipping execution of disabled SchedulerJob[ " + schedulerJobId + "] " + schedulerJobName);
-				return;
+				schedulerJobName = schedulerJob.getName();
+				if (schedulerJob.isDisabled()) {
+					LOG.info("Skipping execution of disabled SchedulerJob[ " + schedulerJobId + "] " + schedulerJobName);
+					return;
+				}
+
+				LOG.info("Starting execution of SchedulerJob[" + schedulerJobId + "] " + schedulerJobName);
+				var commandLogJob = new CommandLogJob();
+				commandLogJob.setSchedulerJob(schedulerJob);
+				commandLogJob.setStart(LocalDateTime.now());
+				commandLogJobId = save(session, commandLogJob);
+
+				for (var schedulerAction : schedulerJob.getSchedulerActions()) {
+					actions.add(new ActionItem(schedulerAction));
+				}
 			}
 
-			LOG.info("Starting execution of SchedulerJob[" + schedulerJobId + "] " + schedulerJobName);
-			var commandLogJob = new CommandLogJob();
-			commandLogJob.setSchedulerJob(schedulerJob);
-			commandLogJob.setStart(LocalDateTime.now());
-			commandLogJobId = save(session, commandLogJob);
+			var actionIndex = 0;
+			for (var action : actions) {
+				var successfulExection = execute(action, actionIndex, commandLogJobId);
+				if (!successfulExection) break;
 
-			for (var schedulerAction : schedulerJob.getSchedulerActions()) {
-				actions.add(new ActionItem(schedulerAction));
+				actionIndex++;
+			}
+
+			try (var session = db.openSession()) {
+				var commandLogJob = getById(CommandLogJob.class, session, commandLogJobId);
+				commandLogJob.setEnd(LocalDateTime.now());
+				save(session, commandLogJob);
+			}
+
+			LOG.info("Completed execution of SchedulerJob[" + schedulerJobId + "] " + schedulerJobName);
+		} finally {
+			synchronized (locker) {
+				executingJobs.remove(schedulerJobId);
 			}
 		}
-
-		var actionIndex = 0;
-		for (var action : actions) {
-			var successfulExection = execute(action, actionIndex, commandLogJobId);
-			if (!successfulExection) break;
-
-			actionIndex++;
-		}
-
-		try (var session = db.openSession()) {
-			var commandLogJob = getById(CommandLogJob.class, session, commandLogJobId);
-			commandLogJob.setEnd(LocalDateTime.now());
-			save(session, commandLogJob);
-		}
-
-		LOG.info("Completed execution of SchedulerJob[" + schedulerJobId + "] " + schedulerJobName);
 	}
 
 	private Command createCommand(ActionItem action) {

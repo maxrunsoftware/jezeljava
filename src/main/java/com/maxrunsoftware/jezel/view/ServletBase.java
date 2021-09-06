@@ -25,6 +25,7 @@ import javax.json.JsonObjectBuilder;
 import com.maxrunsoftware.jezel.BearerService;
 import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.DatabaseService;
+import com.maxrunsoftware.jezel.SchedulerService;
 import com.maxrunsoftware.jezel.SettingService;
 
 import jakarta.servlet.ServletException;
@@ -40,6 +41,7 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 	protected SettingService settings;
 	protected DatabaseService db;
 	protected BearerService bearer;
+	protected SchedulerService scheduler;
 
 	protected static final String HEADER_AUTHORIZATION = "AUTHORIZATION";
 	protected static final String RESPONSE_STATUS = "status";
@@ -54,6 +56,7 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 		settings = getResource(SettingService.class);
 		db = getResource(DatabaseService.class);
 		bearer = getResource(BearerService.class);
+		scheduler = getResource(SchedulerService.class);
 	}
 
 	protected static void writeResponse(HttpServletResponse response, String json) {

@@ -128,6 +128,7 @@ public class SchedulerServiceQuartz implements SchedulerService {
 		server = new QuartzServer();
 		server.setThreadCount(settings.getSchedulerThreads());
 		server.setExecutor(new Executor());
+		server.start();
 	}
 
 	@Override

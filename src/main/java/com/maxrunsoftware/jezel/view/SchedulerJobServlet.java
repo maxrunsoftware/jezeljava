@@ -65,7 +65,6 @@ public class SchedulerJobServlet extends ServletBase {
 					.add(SchedulerJob.ID, schedulerJobId);
 
 			writeResponse(response, json);
-
 		}
 	}
 
@@ -103,6 +102,7 @@ public class SchedulerJobServlet extends ServletBase {
 			if (name != null || group != null || disabled != null) {
 				save(session, schedulerJob);
 				writeResponse(response, RESPONSE_STATUS_SUCCESS, "SchedulerJob[" + schedulerJobId + "] successfully updated", 200);
+				scheduler.sync(schedulerJobId);
 			} else {
 				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerJob[" + schedulerJobId + "] nothing provided to update", 400);
 			}
@@ -126,6 +126,8 @@ public class SchedulerJobServlet extends ServletBase {
 				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerJob[" + schedulerJobId + "] does not exist", 404);
 			}
 		}
+
+		scheduler.sync(schedulerJobId);
 
 	}
 

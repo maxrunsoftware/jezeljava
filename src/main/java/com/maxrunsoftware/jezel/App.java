@@ -18,6 +18,8 @@ package com.maxrunsoftware.jezel;
 import static com.google.common.base.Preconditions.*;
 import static com.maxrunsoftware.jezel.Util.*;
 
+import java.time.LocalDateTime;
+
 import javax.inject.Inject;
 
 import com.google.inject.AbstractModule;
@@ -38,12 +40,14 @@ public class App {
 	private final WebService webServer;
 	private final SettingService settings;
 	private final SchedulerService scheduler;
+	private final DatabaseService db;
 
 	@Inject
-	public App(WebService webServer, SettingService settings, SchedulerService scheduler) {
+	public App(WebService webServer, SettingService settings, SchedulerService scheduler, DatabaseService db) {
 		this.webServer = checkNotNull(webServer);
 		this.settings = checkNotNull(settings);
 		this.scheduler = checkNotNull(scheduler);
+		this.db = checkNotNull(db);
 
 		var map = settings.toMap();
 		for (var key : map.keySet()) {
@@ -103,6 +107,12 @@ public class App {
 			var webjoinThread = settings.getRestJoinThread();
 
 			scheduler.start(webjoinThread);
+			try (var session = db.openSession()) {
+				for (var job : getAll(SchedulerJob.class, session)) {
+					scheduler.sync(job.getSchedulerJobId());
+				}
+			}
+
 			webServer.start(webjoinThread);
 
 			if (!webjoinThread) {
@@ -133,9 +143,17 @@ public class App {
 
 				for (int ii = 0; ii < randomInt(3, 5); ii++) {
 					var s = new SchedulerSchedule();
-					s.setDays(randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean());
+					s.setDays(true, randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean());
 					s.setTime(randomInt(0, 23), randomInt(0, 59));
 					s.setDisabled(randomBoolean());
+					s.setSchedulerJob(j);
+					save(session, s);
+				}
+				for (int ii = 0; ii < 3; ii++) {
+					var s = new SchedulerSchedule();
+					s.setDays(true, true, true, true, true, true, true);
+					s.setTime(LocalDateTime.now().getHour(), LocalDateTime.now().getMinute() + i);
+					s.setDisabled(false);
 					s.setSchedulerJob(j);
 					save(session, s);
 				}
