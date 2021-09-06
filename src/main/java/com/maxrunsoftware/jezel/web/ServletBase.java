@@ -28,6 +28,66 @@ import jakarta.servlet.http.HttpServletResponse;
 public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletBase {
 	private static final long serialVersionUID = 7162466372715656028L;
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ServletBase.class);
+	private static final String CSS = """
+			.topnav {
+			  background-color: #333;
+			  overflow: hidden;
+			}
+
+			/* Style the links inside the navigation bar */
+			.topnav a {
+			  float: left;
+			  color: #f2f2f2;
+			  text-align: center;
+			  padding: 14px 16px;
+			  text-decoration: none;
+			  font-size: 17px;
+			}
+
+			/* Change the color of links on hover */
+			.topnav a:hover {
+			  background-color: #ddd;
+			  color: black;
+			}
+
+			/* Add a color to the active/current link */
+			.topnav a.active {
+			  background-color: #04AA6D;
+			  color: white;
+			}
+
+
+			table {
+			  font-family: Arial, Helvetica, sans-serif;
+			  border-collapse: collapse;
+			  width: 100%;
+			}
+			th {
+			  border: 1px solid #ddd;
+			  padding: 8px;
+			  width: 1px;
+			  white-space: nowrap;
+			  padding-top: 12px;
+			  padding-bottom: 12px;
+			  text-align: left;
+			  background-color: #4CAF50;
+			  color: white;
+			  cursor: pointer;
+			}
+			td {
+			  border: 1px solid #ddd;
+			  padding: 8px;
+			  width: 1px;
+			  white-space: nowrap;
+			}
+			tr:nth-child(even){background-color: #f2f2f2;}
+			tr:hover {background-color: #ddd;}
+
+			""";
+
+	private static final String JAVASCRIPT = """
+
+			""";
 
 	protected SettingService settings;
 	protected DataService data;
@@ -73,64 +133,8 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 					<head>
 						<meta charset="utf-8">
 						<title>${title}</title>
-						<style>
-						.topnav {
-						  background-color: #333;
-						  overflow: hidden;
-						}
-
-						/* Style the links inside the navigation bar */
-						.topnav a {
-						  float: left;
-						  color: #f2f2f2;
-						  text-align: center;
-						  padding: 14px 16px;
-						  text-decoration: none;
-						  font-size: 17px;
-						}
-
-						/* Change the color of links on hover */
-						.topnav a:hover {
-						  background-color: #ddd;
-						  color: black;
-						}
-
-						/* Add a color to the active/current link */
-						.topnav a.active {
-						  background-color: #04AA6D;
-						  color: white;
-						}
-
-
-						table {
-						  font-family: Arial, Helvetica, sans-serif;
-						  border-collapse: collapse;
-						  width: 100%;
-						}
-						th {
-						  border: 1px solid #ddd;
-						  padding: 8px;
-						  width: 1px;
-						  white-space: nowrap;
-						  padding-top: 12px;
-						  padding-bottom: 12px;
-						  text-align: left;
-						  background-color: #4CAF50;
-						  color: white;
-						  cursor: pointer;
-						}
-						td {
-						  border: 1px solid #ddd;
-						  padding: 8px;
-						  width: 1px;
-						  white-space: nowrap;
-						}
-						tr:nth-child(even){background-color: #f2f2f2;}
-						tr:hover {background-color: #ddd;}
-
-						</style>
-
-
+						<style>${style}</style>
+						<script>${script}</script>
 					</head>
 					<body>
 						${topNav}
@@ -142,6 +146,8 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 				""";
 
 		str = str.replace("${title}", title);
+		str = str.replace("${style}", CSS);
+		str = str.replace("${script}", JAVASCRIPT);
 		str = str.replace("${body}", html);
 		str = str.replace("${topNav}", topNav);
 		str = trimOrNull(str);
