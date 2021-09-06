@@ -101,7 +101,7 @@ public class DataService {
 			boolean disabled) throws IOException {
 		client.get(
 				Verb.POST,
-				"job",
+				"job/schedule",
 				par(SchedulerSchedule.ID, schedulerScheduleId),
 				par("sunday", sunday),
 				par("monday", monday),
