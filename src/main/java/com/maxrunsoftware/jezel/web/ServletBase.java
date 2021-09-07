@@ -107,7 +107,7 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 	}
 
 	protected static enum Nav {
-		NONE, HOME, JOBS, LOGS, LOGOUT
+		NONE, HOME, JOBS, SCHEDULES, LOGS, LOGOUT
 	}
 
 	protected abstract Nav getNav();
@@ -118,6 +118,7 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 				<div class="topnav">
 					<a ${activeHome} href="/">Home</a>
 					<a ${activeJobs} href="/jobs">Jobs</a>
+					<a ${activeSchedules} href="/schedules">Schedules</a>
 					<a ${activeLogs} href="/logs">Logs</a>
 					<a ${activeLogout} href="/logout">Logout</a>
 				</div>
@@ -125,6 +126,7 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 		var active = "class=\"active\"";
 		topNav = topNav.replace("${activeHome}", getNav().equals(Nav.HOME) ? active : "");
 		topNav = topNav.replace("${activeJobs}", getNav().equals(Nav.JOBS) ? active : "");
+		topNav = topNav.replace("${activeSchedules}", getNav().equals(Nav.SCHEDULES) ? active : "");
 		topNav = topNav.replace("${activeLogs}", getNav().equals(Nav.LOGS) ? active : "");
 		topNav = topNav.replace("${activeLogout}", getNav().equals(Nav.LOGOUT) ? active : "");
 

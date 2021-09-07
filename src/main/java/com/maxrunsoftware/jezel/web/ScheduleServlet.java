@@ -15,6 +15,7 @@
  */
 package com.maxrunsoftware.jezel.web;
 
+import static com.maxrunsoftware.jezel.Util.*;
 import static j2html.TagCreator.*;
 
 import java.io.IOException;
@@ -38,18 +39,35 @@ public class ScheduleServlet extends ServletBase {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
 		var schedulerScheduleId = getParameterInt(request, SchedulerSchedule.ID);
+		var action = coalesce(getParameter(request, "action"), " ");
 
+		if (schedulerJobId != null && action.equalsIgnoreCase("add")) {
+			// Add
+			doGetShowScheduleSingle(request, response, schedulerJobId, null);
+		} else if (schedulerJobId != null && schedulerScheduleId != null) {
+			// Edit
+			doGetShowScheduleSingle(request, response, schedulerJobId, schedulerScheduleId);
+		} else if (schedulerJobId != null) {
+			// Show for Job
+			doGetShowScheduleAll(request, response, schedulerJobId);
+		} else {
+			// Show everything
+			doGetShowScheduleAll(request, response, null);
+		}
 		if (schedulerJobId == null && schedulerScheduleId == null) {
 			// No ID present so show everything
-			doGetShowScheduleAll(request, response, null);
-		} else if (schedulerJobId != null && schedulerScheduleId == null) {
-			doGetShowScheduleAll(request, response, schedulerJobId);
-		} else if (schedulerScheduleId != null) { doGetShowScheduleSingle(request, response, schedulerScheduleId); }
+		} else if (schedulerJobId != null && schedulerScheduleId == null && !action.equalsIgnoreCase("add")) {
+			// Job ID present so show for job
+		} else if (schedulerScheduleId != null) {
+			// Schedule ID present so show edit screen
+		}
 
 	}
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
+		LOG.debug(SchedulerJob.ID + ": " + schedulerJobId);
 		var schedulerScheduleId = getParameterInt(request, SchedulerSchedule.ID);
 		LOG.debug(SchedulerSchedule.ID + ": " + schedulerScheduleId);
 		var sunday = getParameterBool(request, "schedulerScheduleSunday");
@@ -75,24 +93,38 @@ public class ScheduleServlet extends ServletBase {
 		var enabled = getParameterBool(request, "schedulerScheduleEnabled");
 		LOG.debug("enabled: " + enabled);
 
-		data.updateSchedulerSchedule(
-				schedulerScheduleId,
-				sunday,
-				monday,
-				tuesday,
-				wednesday,
-				thursday,
-				friday,
-				saturday,
-				hour,
-				minute,
-				!enabled);
+		if (schedulerScheduleId == null) {
+			data.addSchedulerSchedule(
+					sunday,
+					monday,
+					tuesday,
+					wednesday,
+					thursday,
+					friday,
+					saturday,
+					hour,
+					minute,
+					!enabled);
+		} else {
+			data.updateSchedulerSchedule(
+					schedulerScheduleId,
+					sunday,
+					monday,
+					tuesday,
+					wednesday,
+					thursday,
+					friday,
+					saturday,
+					hour,
+					minute,
+					!enabled);
+		}
 
-		doGetShowScheduleAll(request, response, null);
+		doGetShowScheduleAll(request, response, schedulerJobId);
 
 	}
 
-	private void doGetShowScheduleSingle(HttpServletRequest request, HttpServletResponse response, int schedulerScheduleId) throws ServletException, IOException {
+	private void doGetShowScheduleSingle(HttpServletRequest request, HttpServletResponse response, int schedulerJobId, Integer schedulerScheduleId) throws ServletException, IOException {
 
 		var title = "Schedule[" + schedulerScheduleId + "]";
 
@@ -105,11 +137,10 @@ public class ScheduleServlet extends ServletBase {
 		}
 
 		var schedule = schedules.get(0);
-
 		var html = form(
+				input().withId(SchedulerJob.ID).withName(SchedulerJob.ID).withType("hidden").withValue("" + schedulerJobId),
+				input().withId(SchedulerSchedule.ID).withName(SchedulerSchedule.ID).withType("hidden").withValue((schedulerScheduleId == null ? "" : "" + schedulerScheduleId)),
 				text("Schedule[" + schedulerScheduleId + "]"),
-				br(),
-				input().withId(SchedulerSchedule.ID).withName(SchedulerSchedule.ID).withType("hidden").withValue("" + schedulerScheduleId),
 				br(),
 				label("Sunday: ").withFor("schedulerScheduleSunday"),
 				input().withId("schedulerScheduleSunday").withName("schedulerScheduleSunday").withType("checkbox").withCondChecked(schedule.isSunday()),
@@ -142,7 +173,7 @@ public class ScheduleServlet extends ServletBase {
 				input().withId("schedulerScheduleEnabled").withName("schedulerScheduleEnabled").withType("checkbox").withCondChecked(!schedule.isDisabled()),
 				br(),
 
-				input().withType("submit").withValue("Save"))
+				input().withType("submit").withValue(schedulerScheduleId == null ? "Add" : "Save"))
 						.withMethod("POST")
 
 		;
@@ -151,8 +182,8 @@ public class ScheduleServlet extends ServletBase {
 
 	}
 
-	private void doGetShowScheduleAll(HttpServletRequest request, HttpServletResponse response, Integer scheduleJobId) throws ServletException, IOException {
-		var jobsAll = data.getSchedulerJob(scheduleJobId);
+	private void doGetShowScheduleAll(HttpServletRequest request, HttpServletResponse response, Integer schedulerJobId) throws ServletException, IOException {
+		var jobsAll = data.getSchedulerJob(schedulerJobId);
 
 		var sb = new StringBuilder();
 
@@ -174,10 +205,13 @@ public class ScheduleServlet extends ServletBase {
 		var rows = new ArrayList<List<Object>>();
 
 		for (var schedule : schedules) {
+			var schedulerScheduleId = schedule.getSchedulerScheduleId();
+			var schedulerJobId = schedule.getSchedulerJob().getSchedulerJobId();
+			var pars = parameters(SchedulerJob.ID, schedulerJobId, SchedulerSchedule.ID, schedulerScheduleId);
 			var list = new ArrayList<Object>();
-			list.add(a("Edit").withHref("/jobs/schedules?" + SchedulerSchedule.ID + "=" + schedule.getSchedulerScheduleId()));
-			list.add(a("" + schedule.getSchedulerScheduleId()).withHref("/jobs/schedules?" + SchedulerSchedule.ID + "=" + schedule.getSchedulerScheduleId()));
-			list.add(a("" + schedule.getSchedulerJob().getSchedulerJobId()).withHref("/jobs?" + SchedulerJob.ID + "=" + schedule.getSchedulerJob().getSchedulerJobId()));
+			list.add(a("Edit").withHref("/schedules" + pars));
+			list.add(a("Schedule[" + schedulerScheduleId + "]").withHref("/schedules" + pars));
+			list.add(a("Job[" + schedulerJobId + "]").withHref("/jobs" + parameters(SchedulerJob.ID, schedulerJobId)));
 			list.add(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(schedule.isSunday()));
 			list.add(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(schedule.isMonday()));
 			list.add(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(schedule.isTuesday()));
@@ -196,6 +230,6 @@ public class ScheduleServlet extends ServletBase {
 
 	@Override
 	protected Nav getNav() {
-		return Nav.JOBS;
+		return Nav.SCHEDULES;
 	}
 }

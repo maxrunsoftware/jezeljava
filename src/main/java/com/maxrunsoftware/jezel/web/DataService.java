@@ -54,6 +54,8 @@ public class DataService {
 	}
 
 	public List<SchedulerSchedule> getSchedulerSchedule(Integer schedulerJobId, Integer schedulerScheduleId) throws IOException {
+
+		//@formatter:off
 		var response = client.get(
 				Verb.GET,
 				"job/schedule",
@@ -68,8 +70,31 @@ public class DataService {
 			ooo.fromJson(oo);
 			list.add(ooo);
 		}
+		
+		/*
+		var list = new ArrayList<SchedulerSchedule>();
+		var jobs = getSchedulerJob(null);
+		for(var job : jobs) {
+			if (schedulerJobId != null) {
+				// Check if we were provided a schedulerJobId
+				if (!schedulerJobId.equals(job.getSchedulerJobId())) {
+					continue;
+				}
+			}
+			for(var schedule : job.getSchedulerSchedules()) {
+				if (schedulerScheduleId != null) {
+					// Check if we were provided a schedulerScheduleId
+					if (!schedulerScheduleId.equals(schedule.getSchedulerScheduleId())) {
+						continue;
+					}
+				}
+				list.add(schedule);
+			}
+		}
+		*/
 		Collections.sort(list, SchedulerSchedule.SORT_ID);
 		return list;
+		//@formatter:on
 	}
 
 	private static ParamNameValue par(String key, Object value) {
@@ -114,6 +139,36 @@ public class DataService {
 				par("minute", minute),
 				par("disabled", disabled));
 
+	}
+
+	public int addSchedulerSchedule(
+			boolean sunday,
+			boolean monday,
+			boolean tuesday,
+			boolean wednesday,
+			boolean thursday,
+			boolean friday,
+			boolean saturday,
+			int hour,
+			int minute,
+			boolean disabled) throws IOException {
+		var response = client.get(
+				Verb.PUT,
+				"job/schedule");
+		var schedulerScheduleId = response.jsonObject().getInt(SchedulerSchedule.ID);
+		updateSchedulerSchedule(
+				schedulerScheduleId,
+				sunday,
+				monday,
+				tuesday,
+				wednesday,
+				thursday,
+				friday,
+				saturday,
+				hour,
+				minute,
+				disabled);
+		return schedulerScheduleId;
 	}
 
 }

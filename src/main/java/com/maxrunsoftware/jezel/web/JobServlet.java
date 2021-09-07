@@ -123,7 +123,7 @@ public class JobServlet extends ServletBase {
 							td("" + i.getSchedulerJobId()),
 							td("" + i.getName()),
 							td("" + i.getGroup()),
-							td(a("" + i.getSchedulerSchedules().size()).withHref("/jobs/schedules?" + SchedulerJob.ID + "=" + i.getSchedulerJobId())),
+							td(a("" + i.getSchedulerSchedules().size()).withHref("/schedules?" + SchedulerJob.ID + "=" + i.getSchedulerJobId())),
 							td("" + i.getSchedulerActions().size()),
 							td("" + i.getCommandLogJobs().size()),
 							td(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(!i.isDisabled())

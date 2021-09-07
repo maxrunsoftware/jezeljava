@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import org.apache.hc.core5.net.URIBuilder;
 
 import com.maxrunsoftware.jezel.Constant;
 
@@ -55,6 +56,29 @@ public abstract class ServletBase extends HttpServlet {
 			if (o == null) throw new IllegalArgumentException("No service found named " + clazz.getName());
 			return (T) o;
 		}
+	}
+
+	protected static String parameters(
+			String name1,
+			Object value1
+
+	) {
+		return new URIBuilder()
+				.addParameter(name1, value1 == null ? "" : value1.toString())
+				.toString();
+	}
+
+	protected static String parameters(
+			String name1,
+			Object value1,
+			String name2,
+			Object value2
+
+	) {
+		return new URIBuilder()
+				.addParameter(name1, value1 == null ? "" : value1.toString())
+				.addParameter(name2, value2 == null ? "" : value2.toString())
+				.toString();
 	}
 
 	protected static Integer getParameterInt(HttpServletRequest request, String name) {
