@@ -107,11 +107,7 @@ public class App {
 			var webjoinThread = settings.getRestJoinThread();
 
 			scheduler.start(webjoinThread);
-			try (var session = db.openSession()) {
-				for (var job : getAll(SchedulerJob.class, session)) {
-					scheduler.sync(job.getSchedulerJobId());
-				}
-			}
+			scheduler.syncAll();
 
 			webServer.start(webjoinThread);
 
@@ -152,7 +148,7 @@ public class App {
 				for (int ii = 0; ii < 3; ii++) {
 					var s = new SchedulerSchedule();
 					s.setDays(true, true, true, true, true, true, true);
-					s.setTime(LocalDateTime.now().getHour(), LocalDateTime.now().getMinute() + i);
+					s.setTime(LocalDateTime.now().getHour(), LocalDateTime.now().getMinute() + ii);
 					s.setDisabled(false);
 					s.setSchedulerJob(j);
 					save(session, s);

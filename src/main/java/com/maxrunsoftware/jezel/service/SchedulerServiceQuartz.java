@@ -16,6 +16,7 @@
 package com.maxrunsoftware.jezel.service;
 
 import static com.google.common.base.Preconditions.*;
+import static com.maxrunsoftware.jezel.Util.*;
 
 import javax.inject.Inject;
 
@@ -38,6 +39,19 @@ public class SchedulerServiceQuartz implements SchedulerService {
 	public SchedulerServiceQuartz(SettingService settings, DatabaseService db) {
 		this.settings = checkNotNull(settings);
 		this.db = checkNotNull(db);
+	}
+
+	@Override
+	public void syncAll() {
+		try (var session = db.openSession()) {
+			for (var job : getAll(SchedulerJob.class, session)) {
+				sync(job.getSchedulerJobId());
+			}
+		}
+
+		for (var entry : server.getEntries()) {
+			LOG.debug(entry.toString());
+		}
 	}
 
 	@Override
@@ -87,18 +101,8 @@ public class SchedulerServiceQuartz implements SchedulerService {
 				if (!result) return;
 				for (var schedulerSchedule : schedulerJob.getSchedulerSchedules()) {
 					LOG.debug("For SchedulerJob[" + schedulerJobId + "] adding SchedulerSchedule[" + schedulerSchedule.getSchedulerScheduleId() + "]");
-					result = server.addTrigger(
-							schedulerJobId,
-							schedulerSchedule.getSchedulerScheduleId(),
-							schedulerSchedule.isSunday(),
-							schedulerSchedule.isMonday(),
-							schedulerSchedule.isTuesday(),
-							schedulerSchedule.isWednesday(),
-							schedulerSchedule.isThursday(),
-							schedulerSchedule.isFriday(),
-							schedulerSchedule.isSaturday(),
-							schedulerSchedule.getHour(),
-							schedulerSchedule.getMinute());
+					result = server.addTrigger(schedulerJobId, schedulerSchedule);
+
 					if (!result) {
 						server.removeJob(schedulerJobId);
 						return;

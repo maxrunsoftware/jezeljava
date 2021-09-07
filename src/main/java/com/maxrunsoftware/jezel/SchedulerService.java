@@ -21,4 +21,6 @@ public interface SchedulerService {
 	public void stop() throws Exception;
 
 	public void sync(int schedulerJobId);
+
+	public void syncAll();
 }

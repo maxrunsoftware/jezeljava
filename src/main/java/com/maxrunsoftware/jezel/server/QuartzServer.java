@@ -16,11 +16,15 @@
 package com.maxrunsoftware.jezel.server;
 
 import static com.google.common.base.Preconditions.*;
+import static com.maxrunsoftware.jezel.Util.*;
+import static org.apache.commons.lang3.StringUtils.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Properties;
 
-import org.apache.commons.lang3.StringUtils;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
@@ -33,8 +37,11 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
+
+import com.maxrunsoftware.jezel.model.SchedulerSchedule;
 
 public class QuartzServer {
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(QuartzServer.class);
@@ -102,56 +109,38 @@ public class QuartzServer {
 		return true;
 	}
 
-	public boolean addTrigger(
-			int jobId,
-			int triggerId,
-			boolean sunday,
-			boolean monday,
-			boolean tuesday,
-			boolean wednesday,
-			boolean thursday,
-			boolean friday,
-			boolean saturday,
-			int hour,
-			int minute) {
-
+	public boolean addTrigger(int schedulerJobId, SchedulerSchedule schedulerSchedule) {
 		var daysList = new ArrayList<Integer>();
-		if (sunday) daysList.add(1);
-		if (monday) daysList.add(2);
-		if (tuesday) daysList.add(3);
-		if (wednesday) daysList.add(4);
-		if (thursday) daysList.add(5);
-		if (friday) daysList.add(6);
-		if (saturday) daysList.add(7);
+		if (schedulerSchedule.isSunday()) daysList.add(1);
+		if (schedulerSchedule.isMonday()) daysList.add(2);
+		if (schedulerSchedule.isTuesday()) daysList.add(3);
+		if (schedulerSchedule.isWednesday()) daysList.add(4);
+		if (schedulerSchedule.isThursday()) daysList.add(5);
+		if (schedulerSchedule.isFriday()) daysList.add(6);
+		if (schedulerSchedule.isSaturday()) daysList.add(7);
 		var days = daysList.toArray(Integer[]::new);
 
+		var hour = schedulerSchedule.getHour();
 		if (hour > 23) hour = 23;
 		if (hour < 0) hour = 0;
+		var minute = schedulerSchedule.getMinute();
 		if (minute > 59) minute = 59;
 		if (minute < 0) minute = 0;
 
-		var desc = new StringBuilder();
-		desc.append(StringUtils.right("000" + hour, 2));
-		desc.append(StringUtils.right("000" + minute, 2));
-		desc.append(sunday ? "Y" : "N");
-		desc.append(monday ? "Y" : "N");
-		desc.append(tuesday ? "Y" : "N");
-		desc.append(wednesday ? "Y" : "N");
-		desc.append(thursday ? "Y" : "N");
-		desc.append(friday ? "Y" : "N");
-		desc.append(saturday ? "Y" : "N");
+		var jobId = schedulerJobId;
+		var triggerId = schedulerSchedule.getSchedulerScheduleId();
 
 		var trigger = TriggerBuilder.newTrigger()
 				.forJob(createJobKey(jobId))
 				.withIdentity(createTriggerKey(triggerId))
-				.withDescription(desc.toString())
+				.withDescription(toJsonString(schedulerSchedule.toJson(), false))
 				.withSchedule(CronScheduleBuilder.atHourAndMinuteOnGivenDaysOfWeek(hour, minute, days))
 				.build();
 
 		return addTrigger(jobId, triggerId, trigger);
 	}
 
-	public boolean addTrigger(int jobId, int triggerId, Trigger trigger) {
+	private boolean addTrigger(int jobId, int triggerId, Trigger trigger) {
 		var removeResult = removeTrigger(triggerId);
 		if (!removeResult) return false; // Should already be logged in removeTrigger
 
@@ -162,6 +151,57 @@ public class QuartzServer {
 			LOG.error("Error scheduling Job[" + jobId + "] with SchedulerSchedule[" + triggerId + "]");
 			return false;
 		}
+	}
+
+	public static record QuartzEntry(int jobId, SchedulerSchedule schedulerSchedule) {
+		@Override
+		public String toString() {
+			var sb = new StringBuilder();
+			sb.append("SchedulerJob[" + jobId + "]:SchedulerSchedule[" + schedulerSchedule.getSchedulerScheduleId() + "] ");
+			sb.append("SUN=" + (schedulerSchedule.isSunday() ? "1" : "0") + "  ");
+			sb.append("MON=" + (schedulerSchedule.isMonday() ? "1" : "0") + "  ");
+			sb.append("TUE=" + (schedulerSchedule.isTuesday() ? "1" : "0") + "  ");
+			sb.append("WED=" + (schedulerSchedule.isWednesday() ? "1" : "0") + "  ");
+			sb.append("THU=" + (schedulerSchedule.isThursday() ? "1" : "0") + "  ");
+			sb.append("FRI=" + (schedulerSchedule.isFriday() ? "1" : "0") + "  ");
+			sb.append("SAT=" + (schedulerSchedule.isSaturday() ? "1" : "0") + "  ");
+			sb.append("HOUR=" + right("000" + schedulerSchedule.getHour(), 2) + "  ");
+			sb.append("MIN=" + right("000" + schedulerSchedule.getMinute(), 2));
+			return sb.toString();
+		}
+
+	}
+
+	public static final Comparator<QuartzEntry> QuartzEntrySort = new Comparator<QuartzEntry>() {
+		@Override
+		public int compare(QuartzEntry o1, QuartzEntry o2) {
+			if (o1 == o2) return 0;
+			if (o1 == null) return -1;
+			if (o2 == null) return 1;
+			var r = Integer.valueOf(o1.jobId).compareTo(o2.jobId);
+			if (r != 0) return r;
+			return Integer.valueOf(o1.schedulerSchedule.getSchedulerScheduleId()).compareTo(o2.schedulerSchedule.getSchedulerScheduleId());
+		}
+	};
+
+	public List<QuartzEntry> getEntries() {
+		var list = new ArrayList<QuartzEntry>();
+		try {
+			var triggerKeys = scheduler.getTriggerKeys(GroupMatcher.anyGroup());
+			for (var triggerKey : triggerKeys) {
+				var trigger = scheduler.getTrigger(triggerKey);
+				var desc = trigger.getDescription();
+				var schedulerSchedule = new SchedulerSchedule();
+				schedulerSchedule.fromJson(fromJsonString(desc));
+				var entry = new QuartzEntry(parseInt(trigger.getJobKey().getName()), schedulerSchedule);
+				list.add(entry);
+			}
+		} catch (SchedulerException e) {
+			LOG.error("SchedulerException", e);
+		}
+
+		Collections.sort(list, QuartzEntrySort);
+		return list;
 	}
 
 	private static class QuartzJob implements Job {
