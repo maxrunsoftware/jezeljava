@@ -55,18 +55,11 @@ public class CommandLogJobServlet extends ServletBase {
 				}
 			}
 
-			if (schedulerJobId == null) {
-				schedulerJobs.addAll(getAll(SchedulerJob.class, session));
-			} else {
-				var schedulerJob = getById(SchedulerJob.class, session, schedulerJobId);
-				if (schedulerJob != null) { schedulerJobs.add(schedulerJob); }
-			}
-
 			var json = createObjectBuilder()
 					.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)
-					.add(RESPONSE_MESSAGE, "Found " + schedulerJobs.size() + " SchedulerJobs");
+					.add(RESPONSE_MESSAGE, "Found " + commandLogJobs.size() + " CommandLogJobs");
 
-			json.add(SchedulerJob.NAME, createArrayBuilder(schedulerJobs));
+			json.add(CommandLogJob.NAME, createArrayBuilder(commandLogJobs));
 			writeResponse(response, json);
 		}
 	}
