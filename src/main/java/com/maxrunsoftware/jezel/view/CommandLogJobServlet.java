@@ -20,6 +20,7 @@ import static com.maxrunsoftware.jezel.Util.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.maxrunsoftware.jezel.model.CommandLogJob;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
 
 import jakarta.servlet.ServletException;
@@ -32,10 +33,28 @@ public class CommandLogJobServlet extends ServletBase {
 
 	@Override
 	protected void doGetAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		var commandLogJobId = getParameterInt(request, CommandLogJob.ID);
 		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
-		try (var session = db.openSession()) {
 
-			var schedulerJobs = new ArrayList<SchedulerJob>();
+		try (var session = db.openSession()) {
+			var commandLogJobs = new ArrayList<CommandLogJob>();
+
+			if (commandLogJobId != null) {
+				// return 1
+				var commandLogJob = getById(CommandLogJob.class, session, commandLogJobId);
+				if (commandLogJob != null) commandLogJobs.add(commandLogJob);
+			} else if (schedulerJobId != null) {
+				// return all logs for job
+				for (var commandLogJob : getAll(CommandLogJob.class, session)) {
+					if (schedulerJobId.equals(commandLogJob.getSchedulerJob().getSchedulerJobId())) { commandLogJobs.add(commandLogJob); }
+				}
+			} else {
+				// return all logs
+				for (var commandLogJob : getAll(CommandLogJob.class, session)) {
+					commandLogJobs.add(commandLogJob);
+				}
+			}
+
 			if (schedulerJobId == null) {
 				schedulerJobs.addAll(getAll(SchedulerJob.class, session));
 			} else {
@@ -53,81 +72,21 @@ public class CommandLogJobServlet extends ServletBase {
 	}
 
 	@Override
-	protected void doPutAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		try (var session = db.openSession()) {
-			var schedulerJob = new SchedulerJob();
-			schedulerJob.setDisabled(false);
-			var schedulerJobId = save(session, schedulerJob);
-
-			var json = createObjectBuilder()
-					.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)
-					.add(RESPONSE_MESSAGE, "Created SchedulerJob[" + schedulerJobId + "]")
-					.add(SchedulerJob.ID, schedulerJobId);
-
-			writeResponse(response, json);
-		}
-	}
-
-	@Override
-	protected void doPostAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
-		if (schedulerJobId == null) {
-			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerJob.ID + "' parameter provided to update SchedulerJob", 400);
-			return;
-		}
-
-		try (var session = db.openSession()) {
-			var schedulerJob = getById(SchedulerJob.class, session, schedulerJobId);
-			if (schedulerJob == null) {
-				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerJob[" + schedulerJobId + "] does not exist", 404);
-				return;
-			}
-
-			var name = trimOrNull(request.getParameter("name"));
-			if (name != null) {
-				LOG.debug("Updating SchedulerJob[" + schedulerJobId + "] [name] from " + schedulerJob.getName() + " to " + name);
-				schedulerJob.setName(name);
-			}
-			var group = trimOrNull(request.getParameter("group"));
-			if (group != null) {
-				LOG.debug("Updating SchedulerJob[" + schedulerJobId + "] [group] from " + schedulerJob.getGroup() + " to " + group);
-				schedulerJob.setGroup(group);
-			}
-			var disabled = trimOrNull(request.getParameter("disabled"));
-			if (disabled != null) {
-				LOG.debug("Updating SchedulerJob[" + schedulerJobId + "] [disabled] from " + schedulerJob.isDisabled() + " to " + disabled);
-				schedulerJob.setDisabled(parseBoolean(disabled));
-			}
-
-			if (name != null || group != null || disabled != null) {
-				save(session, schedulerJob);
-				writeResponse(response, RESPONSE_STATUS_SUCCESS, "SchedulerJob[" + schedulerJobId + "] successfully updated", 200);
-				scheduler.sync(schedulerJobId);
-			} else {
-				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerJob[" + schedulerJobId + "] nothing provided to update", 400);
-			}
-
-		}
-
-	}
-
-	@Override
 	protected void doDeleteAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
-		if (schedulerJobId == null) {
-			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerJob.ID + "' parameter provided to delete SchedulerJob", 400);
+		var commandLogJobId = getParameterInt(request, CommandLogJob.ID);
+		if (commandLogJobId == null) {
+			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + CommandLogJob.ID + "' parameter provided to delete CommandLogJob", 400);
 			return;
 		}
 		try (var session = db.openSession()) {
-			var result = delete(SchedulerJob.class, session, schedulerJobId);
+			LOG.debug("Deleting CommandLogJob[" + commandLogJobId + "]");
+			var result = delete(CommandLogJob.class, session, commandLogJobId);
 			if (result) {
-				writeResponse(response, RESPONSE_STATUS_SUCCESS, "SchedulerJob[" + schedulerJobId + "] successfully deleted", 200);
+				writeResponse(response, RESPONSE_STATUS_SUCCESS, "CommandLogJob[" + commandLogJobId + "] successfully deleted", 200);
 			} else {
-				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerJob[" + schedulerJobId + "] does not exist", 404);
+				writeResponse(response, RESPONSE_STATUS_FAILED, "CommandLogJob[" + commandLogJobId + "] does not exist", 404);
 			}
 		}
-
-		scheduler.sync(schedulerJobId);
 
 	}
 
