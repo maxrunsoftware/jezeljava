@@ -21,7 +21,6 @@ import static com.maxrunsoftware.jezel.Util.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
@@ -46,7 +45,7 @@ public class Table {
 
 	}
 
-	public static Table parse(Iterable<String> columns, Iterable<List<Object>> rows) {
+	public static <T extends Iterable<? extends Object>> Table parse(Iterable<String> columns, Iterable<T> rows) {
 		var cols = ImmutableList.copyOf(columns);
 		var b = ImmutableList.<ImmutableList<String>>builder();
 		for (var row : rows) {

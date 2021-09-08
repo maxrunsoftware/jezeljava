@@ -81,6 +81,41 @@ public abstract class ServletBase extends HttpServlet {
 				.toString();
 	}
 
+	protected static String parameters(
+			String name1,
+			Object value1,
+			String name2,
+			Object value2,
+			String name3,
+			Object value3
+
+	) {
+		return new URIBuilder()
+				.addParameter(name1, value1 == null ? "" : value1.toString())
+				.addParameter(name2, value2 == null ? "" : value2.toString())
+				.addParameter(name3, value3 == null ? "" : value3.toString())
+				.toString();
+	}
+
+	protected static String parameters(
+			String name1,
+			Object value1,
+			String name2,
+			Object value2,
+			String name3,
+			Object value3,
+			String name4,
+			Object value4
+
+	) {
+		return new URIBuilder()
+				.addParameter(name1, value1 == null ? "" : value1.toString())
+				.addParameter(name2, value2 == null ? "" : value2.toString())
+				.addParameter(name3, value3 == null ? "" : value3.toString())
+				.addParameter(name4, value4 == null ? "" : value4.toString())
+				.toString();
+	}
+
 	protected static Integer getParameterInt(HttpServletRequest request, String name) {
 		String val = trimOrNull(getParameter(request, name));
 		if (val == null) return null;
