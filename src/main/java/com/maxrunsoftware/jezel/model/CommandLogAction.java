@@ -129,7 +129,7 @@ public class CommandLogAction implements JsonCodable {
 		json.add("start", getStart() == null ? "" : getStart().toString());
 		json.add("end", getEnd() == null ? "" : getEnd().toString());
 		json.add("index", getIndex());
-
+		json.add(SchedulerAction.NAME, getSchedulerAction().toJson());
 		var arrayBuilder = createArrayBuilder();
 		for (var commandLogMessage : getCommandLogMessages()) {
 			arrayBuilder.add(commandLogMessage.toJson());
@@ -147,6 +147,10 @@ public class CommandLogAction implements JsonCodable {
 		var en = trimOrNull(o.getString("end"));
 		if (en != null) this.setEnd(LocalDateTime.parse(en));
 		this.setIndex(o.getInt("index"));
+
+		var schedulerAction = new SchedulerAction();
+		schedulerAction.fromJson(o.getJsonObject(SchedulerAction.NAME));
+		this.setSchedulerAction(schedulerAction);
 
 		var array = o.getJsonArray("commandLogMessages");
 		var hss = new HashSet<CommandLogMessage>();

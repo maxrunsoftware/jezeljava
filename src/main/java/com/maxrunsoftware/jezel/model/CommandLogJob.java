@@ -104,7 +104,7 @@ public class CommandLogJob implements JsonCodable {
 		json.add(SchedulerJob.ID, getSchedulerJob().getSchedulerJobId());
 		json.add("start", getStart() == null ? "" : getStart().toString());
 		json.add("end", getEnd() == null ? "" : getEnd().toString());
-
+		json.add(SchedulerJob.NAME, getSchedulerJob().toJson());
 		var arrayBuilder = createArrayBuilder();
 		for (var commandLogAction : getCommandLogActions()) {
 			arrayBuilder.add(commandLogAction.toJson());
@@ -121,6 +121,10 @@ public class CommandLogJob implements JsonCodable {
 		if (st != null) this.setStart(LocalDateTime.parse(st));
 		var en = trimOrNull(o.getString("end"));
 		if (en != null) this.setEnd(LocalDateTime.parse(en));
+
+		var schedulerJob = new SchedulerJob();
+		schedulerJob.fromJson(o.getJsonObject(SchedulerJob.NAME));
+		this.setSchedulerJob(schedulerJob);
 
 		var array = o.getJsonArray("commandLogActions");
 		var hss = new HashSet<CommandLogAction>();
