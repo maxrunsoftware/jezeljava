@@ -142,6 +142,7 @@ public class DataService {
 	}
 
 	public int addSchedulerSchedule(
+			int schedulerJobId,
 			boolean sunday,
 			boolean monday,
 			boolean tuesday,
@@ -154,7 +155,8 @@ public class DataService {
 			boolean disabled) throws IOException {
 		var response = client.get(
 				Verb.PUT,
-				"job/schedule");
+				"job/schedule",
+				par(SchedulerJob.ID, schedulerJobId));
 		var schedulerScheduleId = response.jsonObject().getInt(SchedulerSchedule.ID);
 		updateSchedulerSchedule(
 				schedulerScheduleId,

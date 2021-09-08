@@ -115,6 +115,7 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		LOG.debug("GET: " + getFullURL(request));
 		if (authorize(request, response)) { doGetAuthorized(request, response); }
 	}
 
@@ -124,6 +125,7 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		LOG.debug("PUT: " + getFullURL(request));
 		if (authorize(request, response)) { doPutAuthorized(request, response); }
 	}
 
@@ -133,6 +135,7 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		LOG.debug("POST: " + getFullURL(request));
 		if (authorize(request, response)) { doPostAuthorized(request, response); }
 	}
 
@@ -142,6 +145,7 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		LOG.debug("DELETE: " + getFullURL(request));
 		if (authorize(request, response)) { doDeleteAuthorized(request, response); }
 	}
 

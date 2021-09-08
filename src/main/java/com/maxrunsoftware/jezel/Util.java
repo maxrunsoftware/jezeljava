@@ -42,6 +42,8 @@ import javax.persistence.criteria.CriteriaQuery;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.hibernate.Session;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 public final class Util {
 	public static final String httpAuthorizationEncode(String username, String password) {
 		final var up = username + ":" + password;
@@ -325,4 +327,11 @@ public final class Util {
 		return true;
 	}
 
+	public static final String getFullURL(HttpServletRequest request) {
+		// https://stackoverflow.com/a/2222268
+		StringBuilder requestURL = new StringBuilder(request.getRequestURL().toString());
+		String queryString = request.getQueryString();
+		if (queryString != null) { requestURL.append("?").append(queryString); }
+		return requestURL.toString();
+	}
 }

@@ -89,21 +89,21 @@ public class RestClient {
 			}
 
 			if (foundOne) { host = host + uribuilder.toString(); }
-
+			LOG.debug(verb.toString().toUpperCase() + "[" + bearer + "]: " + host);
 			var response = get(verb, host, bearer);
 			if (response.code == 401) {
 				// Old bearer token, get a new one
 				login();
-			}
-			response = get(verb, host, bearer);
-			if (response.code == 401) {
-				// Bad username or password
-				var msg = "Received 401 attempting to login";
-				if (response.jsonObject != null) {
-					var jmsg = trimOrNull(response.jsonObject.getString("message"));
-					if (jmsg != null) msg = msg + ": " + jmsg;
+				response = get(verb, host, bearer);
+				if (response.code == 401) {
+					// Bad username or password
+					var msg = "Received 401 attempting to login";
+					if (response.jsonObject != null) {
+						var jmsg = trimOrNull(response.jsonObject.getString("message"));
+						if (jmsg != null) msg = msg + ": " + jmsg;
+					}
+					throw new Exception(msg);
 				}
-				throw new Exception(msg);
 			}
 
 			return response;

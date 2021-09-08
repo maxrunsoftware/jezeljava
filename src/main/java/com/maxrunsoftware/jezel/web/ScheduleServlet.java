@@ -44,7 +44,7 @@ public class ScheduleServlet extends ServletBase {
 		if (schedulerJobId != null && action.equalsIgnoreCase("add")) {
 			// Add
 			doGetShowScheduleSingle(request, response, schedulerJobId, null);
-		} else if (schedulerJobId != null && schedulerScheduleId != null) {
+		} else if (schedulerJobId != null && schedulerScheduleId != null && action.equalsIgnoreCase("edit")) {
 			// Edit
 			doGetShowScheduleSingle(request, response, schedulerJobId, schedulerScheduleId);
 		} else if (schedulerJobId != null) {
@@ -53,13 +53,6 @@ public class ScheduleServlet extends ServletBase {
 		} else {
 			// Show everything
 			doGetShowScheduleAll(request, response, null);
-		}
-		if (schedulerJobId == null && schedulerScheduleId == null) {
-			// No ID present so show everything
-		} else if (schedulerJobId != null && schedulerScheduleId == null && !action.equalsIgnoreCase("add")) {
-			// Job ID present so show for job
-		} else if (schedulerScheduleId != null) {
-			// Schedule ID present so show edit screen
 		}
 
 	}
@@ -95,6 +88,7 @@ public class ScheduleServlet extends ServletBase {
 
 		if (schedulerScheduleId == null) {
 			data.addSchedulerSchedule(
+					schedulerJobId,
 					sunday,
 					monday,
 					tuesday,
@@ -192,7 +186,10 @@ public class ScheduleServlet extends ServletBase {
 			Collections.sort(schedules, SchedulerSchedule.SORT_ID);
 			var table = toTable(schedules);
 			sb.append("<p>");
+			var link = a("Add").withHref("/schedules" + parameters(SchedulerJob.ID, job.getSchedulerJobId(), "action", "add"));
+			// var link = <a href="https://www.w3schools.com/">Visit W3Schools.com!</a>
 			sb.append(h2("Job[" + job.getSchedulerJobId() + "] " + job.getName()));
+			sb.append(link);
 			sb.append(table.toHtml());
 			sb.append("</p><br><br>");
 		}
@@ -207,10 +204,10 @@ public class ScheduleServlet extends ServletBase {
 		for (var schedule : schedules) {
 			var schedulerScheduleId = schedule.getSchedulerScheduleId();
 			var schedulerJobId = schedule.getSchedulerJob().getSchedulerJobId();
-			var pars = parameters(SchedulerJob.ID, schedulerJobId, SchedulerSchedule.ID, schedulerScheduleId);
+			var parsEdit = parameters(SchedulerJob.ID, schedulerJobId, SchedulerSchedule.ID, schedulerScheduleId, "action", "edit");
 			var list = new ArrayList<Object>();
-			list.add(a("Edit").withHref("/schedules" + pars));
-			list.add(a("Schedule[" + schedulerScheduleId + "]").withHref("/schedules" + pars));
+			list.add(a("Edit").withHref("/schedules" + parsEdit));
+			list.add(a("Schedule[" + schedulerScheduleId + "]").withHref("/schedules" + parsEdit));
 			list.add(a("Job[" + schedulerJobId + "]").withHref("/jobs" + parameters(SchedulerJob.ID, schedulerJobId)));
 			list.add(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(schedule.isSunday()));
 			list.add(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(schedule.isMonday()));
