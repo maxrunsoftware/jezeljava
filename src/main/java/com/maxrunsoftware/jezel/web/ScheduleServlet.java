@@ -43,10 +43,10 @@ public class ScheduleServlet extends ServletBase {
 
 		if (schedulerJobId != null && action.equalsIgnoreCase("add")) {
 			// Add
-			doGetShowScheduleSingle(request, response, schedulerJobId, null);
+			doGetShowScheduleSingle(request, response, schedulerJobId, null, null);
 		} else if (schedulerJobId != null && schedulerScheduleId != null && action.equalsIgnoreCase("edit")) {
 			// Edit
-			doGetShowScheduleSingle(request, response, schedulerJobId, schedulerScheduleId);
+			doGetShowScheduleSingle(request, response, schedulerJobId, schedulerScheduleId, null);
 		} else if (schedulerJobId != null) {
 			// Show for Job
 			doGetShowScheduleAll(request, response, schedulerJobId);
@@ -86,7 +86,11 @@ public class ScheduleServlet extends ServletBase {
 		var enabled = getParameterBool(request, "schedulerScheduleEnabled");
 		LOG.debug("enabled: " + enabled);
 
-		if (schedulerScheduleId == null) {
+		if (!sunday && !monday && !tuesday && !wednesday && !thursday && !friday && !saturday) {
+			doGetShowScheduleSingle(request, response, schedulerJobId, schedulerScheduleId, "Must select at least 1 day of the week");
+		}
+
+		else if (schedulerScheduleId == null) {
 			data.addSchedulerSchedule(
 					schedulerJobId,
 					sunday,
@@ -99,6 +103,7 @@ public class ScheduleServlet extends ServletBase {
 					hour,
 					minute,
 					!enabled);
+			doGetShowScheduleAll(request, response, schedulerJobId);
 		} else {
 			data.updateSchedulerSchedule(
 					schedulerScheduleId,
@@ -112,17 +117,22 @@ public class ScheduleServlet extends ServletBase {
 					hour,
 					minute,
 					!enabled);
+			doGetShowScheduleAll(request, response, schedulerJobId);
 		}
-
-		doGetShowScheduleAll(request, response, schedulerJobId);
 
 	}
 
-	private void doGetShowScheduleSingle(HttpServletRequest request, HttpServletResponse response, int schedulerJobId, Integer schedulerScheduleId) throws ServletException, IOException {
+	private void doGetShowScheduleSingle(HttpServletRequest request, HttpServletResponse response, int schedulerJobId, Integer schedulerScheduleId, String errorMessage)
+			throws ServletException, IOException {
 
 		var title = "Schedule[" + schedulerScheduleId + "]";
 
-		var schedules = data.getSchedulerSchedule(null, schedulerScheduleId);
+		List<SchedulerSchedule> schedules = new ArrayList<SchedulerSchedule>();
+		if (schedulerScheduleId == null) {
+			schedules.add(new SchedulerSchedule());
+		} else {
+			schedules = data.getSchedulerSchedule(null, schedulerScheduleId);
+		}
 
 		if (schedules.size() == 0) {
 			var html = "<h2>" + title + " not found<h2>";
@@ -172,7 +182,13 @@ public class ScheduleServlet extends ServletBase {
 
 		;
 
-		writeResponse(response, title, html.renderFormatted(), 200);
+		if (errorMessage == null) {
+			errorMessage = "";
+		} else {
+			errorMessage = "<p class=\"errorMessage\">ERROR: " + errorMessage + "</p>";
+		}
+
+		writeResponse(response, title, errorMessage + html.renderFormatted(), 200);
 
 	}
 

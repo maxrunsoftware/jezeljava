@@ -83,6 +83,12 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 			tr:nth-child(even){background-color: #f2f2f2;}
 			tr:hover {background-color: #ddd;}
 
+			.errorMessage {
+			  font-weight: bold;
+			  font-size: 32px;
+			  color: red;
+			}
+
 			""";
 
 	private static final String JAVASCRIPT = """
