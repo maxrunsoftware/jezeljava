@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.maxrunsoftware.jezel.model.CommandLogJob;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
 import com.maxrunsoftware.jezel.model.SchedulerSchedule;
 import com.maxrunsoftware.jezel.web.RestClient.ParamNameValue;
@@ -179,6 +180,26 @@ public class DataService {
 				"job/schedule",
 				par(SchedulerSchedule.ID, schedulerScheduleId));
 
+	}
+
+	public List<CommandLogJob> getCommandLogJob(Integer commandLogJob, Integer schedulerJobId) throws IOException {
+		var response = client.get(Verb.GET,
+				"log/job",
+				par(CommandLogJob.ID, commandLogJob),
+				par(SchedulerJob.ID, schedulerJobId));
+
+		var o = response.jsonObject();
+		var array = o.getJsonArray(CommandLogJob.NAME);
+		var list = new ArrayList<CommandLogJob>();
+		for (var val : array) {
+			var oo = val.asJsonObject();
+			var ooo = new CommandLogJob();
+			ooo.fromJson(oo);
+			list.add(ooo);
+		}
+
+		Collections.sort(list, CommandLogJob.SORT_JOB);
+		return list;
 	}
 
 }

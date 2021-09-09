@@ -18,6 +18,7 @@ package com.maxrunsoftware.jezel.model;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 
 import javax.json.JsonObject;
 import javax.persistence.Column;
@@ -34,6 +35,21 @@ import com.maxrunsoftware.jezel.JsonCodable;
 public class CommandLogMessage implements JsonCodable {
 	public static final String NAME = "commandLogMessage";
 	public static final String ID = NAME + "Id";
+
+	public static final Comparator<CommandLogMessage> SORT_INDEX = new Comparator<CommandLogMessage>() {
+		@Override
+		public int compare(CommandLogMessage o1, CommandLogMessage o2) {
+			if (o1 == o2) return 0;
+			if (o1 == null) return -1;
+			if (o2 == null) return 1;
+			var c = compareTo(o1.getIndex(), o2.getIndex());
+			if (c != 0) return c;
+			c = compareTo(o1.getCommandLogAction().getIndex(), o2.getCommandLogAction().getIndex());
+			if (c != 0) return c;
+			c = compareTo(o1.getCommandLogMessageId(), o2.getCommandLogMessageId());
+			return c;
+		}
+	};
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)

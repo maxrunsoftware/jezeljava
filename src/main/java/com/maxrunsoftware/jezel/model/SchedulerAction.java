@@ -118,6 +118,17 @@ public class SchedulerAction implements JsonCodable {
 		this.disabled = disabled;
 	}
 
+	@Column(nullable = false)
+	private int index;
+
+	public int getIndex() {
+		return index;
+	}
+
+	public void setIndex(int index) {
+		this.index = index;
+	}
+
 	@Override
 	public JsonObject toJson() {
 		var json = createObjectBuilder();
@@ -126,7 +137,7 @@ public class SchedulerAction implements JsonCodable {
 		json.add("name", coalesce(getName(), ""));
 		json.add("description", coalesce(getDescription(), ""));
 		json.add("disabled", isDisabled());
-
+		json.add("index", getIndex());
 		var arrayBuilder = createArrayBuilder();
 		for (var schedulerActionParameter : getSchedulerActionParameters()) {
 			arrayBuilder.add(schedulerActionParameter.toJson());
@@ -142,7 +153,7 @@ public class SchedulerAction implements JsonCodable {
 		this.setName(o.getString("name"));
 		this.setDescription(o.getString("description"));
 		this.setDisabled(o.getBoolean("disabled"));
-
+		this.setIndex(getIndex());
 		var array = o.getJsonArray("schedulerActionParameters");
 		var h = new HashSet<SchedulerActionParameter>();
 		for (var item : array) {

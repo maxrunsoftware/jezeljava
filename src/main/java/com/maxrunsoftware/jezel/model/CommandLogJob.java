@@ -18,6 +18,7 @@ package com.maxrunsoftware.jezel.model;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,6 +39,21 @@ import com.maxrunsoftware.jezel.JsonCodable;
 public class CommandLogJob implements JsonCodable {
 	public static final String NAME = "commandLogJob";
 	public static final String ID = NAME + "Id";
+
+	public static final Comparator<CommandLogJob> SORT_JOB = new Comparator<CommandLogJob>() {
+		@Override
+		public int compare(CommandLogJob o1, CommandLogJob o2) {
+			if (o1 == o2) return 0;
+			if (o1 == null) return -1;
+			if (o2 == null) return 1;
+			var c = compareTo(o1.getSchedulerJob().getSchedulerJobId(), o2.getSchedulerJob().getSchedulerJobId());
+			if (c != 0) return c;
+			c = o1.getStart().compareTo(o2.getStart());
+			if (c != 0) return c;
+			c = o1.getEnd().compareTo(o2.getEnd());
+			return compareTo(o1.getCommandLogJobId(), o2.getCommandLogJobId());
+		}
+	};
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)

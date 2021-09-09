@@ -334,4 +334,10 @@ public final class Util {
 		if (queryString != null) { requestURL.append("?").append(queryString); }
 		return requestURL.toString();
 	}
+
+	public static final int compareTo(int o1, int o2) {
+		if (o1 == o2) return 0;
+		if (o1 < o2) return -1;
+		return 1;
+	}
 }

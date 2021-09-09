@@ -160,6 +160,7 @@ public class App {
 					a.setDescription(randomPick(Constant.NOUNS));
 					a.setDisabled(randomBoolean());
 					a.setSchedulerJob(j);
+					a.setIndex(ii);
 					a = getById(SchedulerAction.class, session, save(session, a));
 
 					for (int iii = 0; iii < randomInt(5, 8); iii++) {

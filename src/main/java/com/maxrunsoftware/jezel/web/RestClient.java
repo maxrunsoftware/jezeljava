@@ -87,9 +87,9 @@ public class RestClient {
 					foundOne = true;
 				}
 			}
-
 			if (foundOne) { host = host + uribuilder.toString(); }
 			LOG.debug(verb.toString().toUpperCase() + "[" + bearer + "]: " + host);
+
 			var response = get(verb, host, bearer);
 			if (response.code == 401) {
 				// Old bearer token, get a new one
@@ -137,6 +137,7 @@ public class RestClient {
 		int code = -1;
 		JsonObject o = null;
 		String json = null;
+		String error = null;
 
 		try (CloseableHttpClient httpclient = createClient()) {
 			LOG.trace("HttpClient created: " + httpclient.getClass().getName());
@@ -147,11 +148,18 @@ public class RestClient {
 				json = EntityUtils.toString(httpEntity);
 
 				if (settings.getRestShowRest()) { LOG.debug(json); }
-
-				o = fromJsonString(json);
+				try {
+					o = fromJsonString(json);
+				} catch (Exception e) {
+					LOG.debug("Error processing response to JSON", e);
+					// Since we couldn't deserialize then the message is probably an error
+					error = json;
+					LOG.warn(error);
+				}
 
 			}
 		}
+		if (error != null) throw new IOException(error);
 		return new Response(code, json, o);
 
 	}

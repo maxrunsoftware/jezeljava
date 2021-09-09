@@ -32,6 +32,7 @@ import com.maxrunsoftware.jezel.service.SchedulerServiceQuartz;
 import com.maxrunsoftware.jezel.service.SettingServiceEnvironment;
 import com.maxrunsoftware.jezel.service.WebServiceJetty;
 import com.maxrunsoftware.jezel.service.WebServiceJettyBearerMemory;
+import com.maxrunsoftware.jezel.view.CommandLogJobServlet;
 import com.maxrunsoftware.jezel.view.HomeServlet;
 import com.maxrunsoftware.jezel.view.SchedulerActionParameterServlet;
 import com.maxrunsoftware.jezel.view.SchedulerActionServlet;
@@ -63,7 +64,8 @@ public class Constant {
 			new Page(SchedulerJobServlet.class, "/job"),
 			new Page(SchedulerScheduleServlet.class, "/job/schedule"),
 			new Page(SchedulerActionServlet.class, "/job/action"),
-			new Page(SchedulerActionParameterServlet.class, "/job/action/parameter")
+			new Page(SchedulerActionParameterServlet.class, "/job/action/parameter"),
+			new Page(CommandLogJobServlet.class, "/log/job")
 
 	);
 
@@ -72,7 +74,8 @@ public class Constant {
 			new Page(com.maxrunsoftware.jezel.web.LogoutServlet.class, "/logout"),
 			new Page(com.maxrunsoftware.jezel.web.HomeServlet.class, "/*"),
 			new Page(com.maxrunsoftware.jezel.web.JobServlet.class, "/jobs"),
-			new Page(com.maxrunsoftware.jezel.web.ScheduleServlet.class, "/schedules")
+			new Page(com.maxrunsoftware.jezel.web.ScheduleServlet.class, "/schedules"),
+			new Page(com.maxrunsoftware.jezel.web.LogJobServlet.class, "/logs")
 
 	);
 

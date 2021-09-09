@@ -19,10 +19,16 @@ import static j2html.TagCreator.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
+import com.maxrunsoftware.jezel.model.CommandLogAction;
+import com.maxrunsoftware.jezel.model.CommandLogJob;
+import com.maxrunsoftware.jezel.model.CommandLogMessage;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
+import com.maxrunsoftware.jezel.model.SchedulerSchedule;
+import com.maxrunsoftware.jezel.util.Table;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,108 +41,139 @@ public class LogJobServlet extends ServletBase {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
-		if (schedulerJobId == null) {
-			doGetShowJobAll(request, response);
+		var commandLogJobId = getParameterInt(request, CommandLogJob.ID);
+		if (commandLogJobId != null) {
+			doGetShowLogSingle(request, response, commandLogJobId);
 		} else {
-			doGetShowJobSingle(request, response, schedulerJobId);
+			doGetShowLogAll(request, response, schedulerJobId);
 		}
 	}
 
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerJobId = getParameterInt(request, "schedulerJobId");
-		LOG.debug("schedulerJobId: " + schedulerJobId);
-		var name = getParameter(request, "schedulerJobName");
-		LOG.debug("name: " + name);
-		var group = getParameter(request, "schedulerJobGroup");
-		LOG.debug("group: " + group);
-		var enabled = getParameterBool(request, "schedulerJobEnabled");
-		LOG.debug("enabled: " + enabled);
+	private void doGetShowLogSingle(HttpServletRequest request, HttpServletResponse response, int commandLogJobId) throws ServletException, IOException {
+		var title = "CommandLogJob[" + commandLogJobId + "]";
 
-		data.updateSchedulerJob(schedulerJobId, name, group, !enabled);
+		var commandLogJobs = data.getCommandLogJob(commandLogJobId, null);
 
-		doGetShowJobAll(request, response);
-
-	}
-
-	private void doGetShowJobSingle(HttpServletRequest request, HttpServletResponse response, int schedulerJobId) throws ServletException, IOException {
-
-		var title = "Job[" + schedulerJobId + "]";
-
-		var jobs = data.getSchedulerJob(schedulerJobId);
-
-		if (jobs.size() == 0) {
+		if (commandLogJobs.size() == 0) {
 			var html = "<h2>" + title + " not found<h2>";
 			writeResponse(response, title, html, 404);
 			return;
 		}
 
-		var job = jobs.get(0);
+		var columns = List.of(
+				"ID",
+				"Type",
+				"Index",
+				"Timestamp",
+				"Level",
+				"Message",
+				"Error"
 
-		var html = form(
-				text("Job[" + schedulerJobId + "]"),
-				input().withId("schedulerJobId").withName("schedulerJobId").withType("hidden").withValue("" + schedulerJobId),
-				br(),
-				label("Name: ").withFor("schedulerJobName"),
-				input().withId("schedulerJobName").withName("schedulerJobName").withType("text").withValue(job.getName()),
-				br(),
-				label("Group: ").withFor("schedulerJobGroup"),
-				input().withId("schedulerJobGroup").withName("schedulerJobGroup").withType("text").withValue(job.getGroup()),
-				br(),
-				label("Enabled: ").withFor("schedulerJobEnabled"),
-				input().withId("schedulerJobEnabled").withName("schedulerJobEnabled").withType("checkbox").withCondChecked(!job.isDisabled()),
-				br(),
-				input().withType("submit").withValue("Save"))
-						.withMethod("POST")
+		);
 
-		;
+		var rows = new ArrayList<ArrayList<Object>>();
 
-		writeResponse(response, title, html.renderFormatted(), 200);
+		var commandLogJob = commandLogJobs.get(0);
+		var commandLogActions = new ArrayList<CommandLogAction>(commandLogJob.getCommandLogActions());
+		Collections.sort(commandLogActions, CommandLogAction.SORT_INDEX);
+		for (var commandLogAction : commandLogActions) {
+			var list = new ArrayList<Object>();
+			list.add(CommandLogAction.ID + "[" + commandLogAction.getCommandLogActionId() + "]");
+			list.add("Action");
+			list.add(commandLogAction.getIndex());
+			list.add(commandLogAction.getStart());
+			list.add("");
+			list.add("");
+			list.add("");
+			rows.add(list);
+
+			var commandLogMessages = new ArrayList<CommandLogMessage>(commandLogAction.getCommandLogMessages());
+			Collections.sort(commandLogMessages, CommandLogMessage.SORT_INDEX);
+			for (var commandLogMessage : commandLogMessages) {
+				list = new ArrayList<Object>();
+				list.add(CommandLogMessage.ID + "[" + commandLogMessage.getCommandLogMessageId() + "]");
+				list.add("Message");
+				list.add(commandLogMessage.getIndex());
+				list.add(commandLogMessage.getTimestamp());
+				list.add(commandLogMessage.getLevel());
+				list.add(commandLogMessage.getMessage());
+				list.add(commandLogMessage.getException());
+				rows.add(list);
+			}
+
+			list = new ArrayList<Object>();
+			list.add(CommandLogAction.ID + "[" + commandLogAction.getCommandLogActionId() + "]");
+			list.add("Action");
+			list.add(commandLogAction.getIndex());
+			list.add(commandLogAction.getEnd());
+			list.add("");
+			list.add("");
+			list.add("");
+			rows.add(list);
+		}
+
+		var table = Table.parse(columns, rows);
+
+		var cljhtml = p(
+				text(CommandLogAction.ID + "[" + commandLogJobId + "]"),
+				br(),
+				text("Start: " + commandLogJob.getStart()),
+				br(),
+				text("End: " + commandLogJob.getEnd()),
+				br(),
+				text("Error: " + commandLogJob.isError()),
+				br());
+
+		var sb = new StringBuilder();
+		sb.append(cljhtml);
+		sb.append(table.toHtml());
+
+		writeResponse(response, CommandLogAction.ID + "[" + commandLogJobId + "]", sb.toString(), 200);
 
 	}
 
-	private void doGetShowJobAll(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var headers = List.of("", "JobId", "Name", "Group", "Schedules", "Actions", "Logs", "Enabled");
-		var jobsAll = data.getSchedulerJob(null);
-		var map = new TreeMap<String, ArrayList<SchedulerJob>>();
-		for (var job : jobsAll) {
-			var key = job.getGroup();
-			if (key == null) key = "";
-			key = key.toUpperCase();
-			var list = map.get(key);
-			if (list == null) {
-				list = new ArrayList<SchedulerJob>();
-				map.put(key, list);
-			}
-			list.add(job);
-		}
+	private void doGetShowLogAll(HttpServletRequest request, HttpServletResponse response, Integer schedulerJobId) throws ServletException, IOException {
+		var commandLogJobs = data.getCommandLogJob(null, schedulerJobId);
 
 		var sb = new StringBuilder();
-		for (var key : map.keySet()) {
-			var jobs = map.get(key);
+
+		int currentSchedulerJobId = -1;
+		
+		var map = new TreeMap<Integer, ArrayList<CommandLogJob>>();
+		for (var commandLogJob : commandLogJobs) {
+			schedulerJobId = commandLogJob.getSchedulerJob().getSchedulerJobId();
+			var list = map.get(schedulerJobId);
+			if (list == null) {
+				list = new ArrayList<CommandLogJob>();
+				map.put(schedulerJobId, list);
+			}
+			list.add(commandLogJob);
+		}
+		
+		for(var schedulerJobId2 : map.keySet()) {
+			var commandLogJobs2 = map.get(schedulerJobId2);
+			Collections.sort(commandLogJobs2, CommandLogJob.SORT_JOB);
+			commandLogJobs2.
+		}
+		
+			var schedules = new ArrayList<SchedulerSchedule>(job.getSchedulerSchedules());
+			Collections.sort(schedules, SchedulerSchedule.SORT_ID);
+			var table = toTable(schedules);
 			sb.append("<p>");
-			sb.append(h2(key));
-			var table = table(attrs("#table-example"),
-					thead(each(headers, h -> th(h))),
-					tbody(each(jobs, i -> tr(
-							td(a("Edit").withHref("/jobs?schedulerJobId=" + i.getSchedulerJobId())),
-							td("" + i.getSchedulerJobId()),
-							td("" + i.getName()),
-							td("" + i.getGroup()),
-							td(a("" + i.getSchedulerSchedules().size()).withHref("/schedules?" + SchedulerJob.ID + "=" + i.getSchedulerJobId())),
-							td("" + i.getSchedulerActions().size()),
-							td("" + i.getCommandLogJobs().size()),
-							td(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(!i.isDisabled())
-							// End of row
-							)))));
-			sb.append(table.renderFormatted());
+			var link = a("Add").withHref("/schedules" + parameters(SchedulerJob.ID, job.getSchedulerJobId(), "action", "add"));
+			// var link = <a href="https://www.w3schools.com/">Visit W3Schools.com!</a>
+			sb.append(h2("Job[" + job.getSchedulerJobId() + "] " + job.getName()));
+			sb.append(link);
+			sb.append(table.toHtml());
 			sb.append("</p><br><br>");
 		}
-		writeResponse(response, "Jobs", sb.toString(), 200);
+
+	writeResponse(response, "Schedules", sb.toString(), 200);
+
 	}
 
 	@Override
 	protected Nav getNav() {
-		return Nav.JOBS;
+		return Nav.LOGS;
 	}
 }
