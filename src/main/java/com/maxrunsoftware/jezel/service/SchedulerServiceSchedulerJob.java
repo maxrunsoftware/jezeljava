@@ -151,9 +151,10 @@ public class SchedulerServiceSchedulerJob {
 			}
 
 			var actionIndex = 0;
+			boolean successfulExecution = true;
 			for (var action : actions) {
-				var successfulExection = execute(action, actionIndex, commandLogJobId);
-				if (!successfulExection) break;
+				successfulExecution = execute(action, actionIndex, commandLogJobId);
+				if (!successfulExecution) break;
 
 				actionIndex++;
 			}
@@ -161,6 +162,7 @@ public class SchedulerServiceSchedulerJob {
 			try (var session = db.openSession()) {
 				var commandLogJob = getById(CommandLogJob.class, session, commandLogJobId);
 				commandLogJob.setEnd(LocalDateTime.now());
+				commandLogJob.setError(!successfulExecution);
 				save(session, commandLogJob);
 			}
 

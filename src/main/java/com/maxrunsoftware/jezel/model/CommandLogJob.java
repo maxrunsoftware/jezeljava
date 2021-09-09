@@ -97,6 +97,17 @@ public class CommandLogJob implements JsonCodable {
 		this.end = end;
 	}
 
+	@Column(nullable = false)
+	private boolean error;
+
+	public boolean isError() {
+		return error;
+	}
+
+	public void setError(boolean error) {
+		this.error = error;
+	}
+
 	@Override
 	public JsonObject toJson() {
 		var json = createObjectBuilder();
