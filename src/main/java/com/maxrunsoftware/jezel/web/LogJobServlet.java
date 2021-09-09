@@ -15,9 +15,12 @@
  */
 package com.maxrunsoftware.jezel.web;
 
+import static com.maxrunsoftware.jezel.Util.*;
 import static j2html.TagCreator.*;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +30,6 @@ import com.maxrunsoftware.jezel.model.CommandLogAction;
 import com.maxrunsoftware.jezel.model.CommandLogJob;
 import com.maxrunsoftware.jezel.model.CommandLogMessage;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
-import com.maxrunsoftware.jezel.model.SchedulerSchedule;
 import com.maxrunsoftware.jezel.util.Table;
 
 import jakarta.servlet.ServletException;
@@ -61,13 +63,11 @@ public class LogJobServlet extends ServletBase {
 		}
 
 		var columns = List.of(
-				"ID",
+				"Action",
 				"Type",
-				"Index",
 				"Timestamp",
 				"Level",
-				"Message",
-				"Error"
+				"Message"
 
 		);
 
@@ -78,11 +78,9 @@ public class LogJobServlet extends ServletBase {
 		Collections.sort(commandLogActions, CommandLogAction.SORT_INDEX);
 		for (var commandLogAction : commandLogActions) {
 			var list = new ArrayList<Object>();
-			list.add(CommandLogAction.ID + "[" + commandLogAction.getCommandLogActionId() + "]");
-			list.add("Action");
-			list.add(commandLogAction.getIndex());
-			list.add(commandLogAction.getStart());
-			list.add("");
+			list.add(commandLogAction.getName());
+			list.add("Start");
+			list.add(format(commandLogAction.getStart()));
 			list.add("");
 			list.add("");
 			rows.add(list);
@@ -91,25 +89,24 @@ public class LogJobServlet extends ServletBase {
 			Collections.sort(commandLogMessages, CommandLogMessage.SORT_INDEX);
 			for (var commandLogMessage : commandLogMessages) {
 				list = new ArrayList<Object>();
-				list.add(CommandLogMessage.ID + "[" + commandLogMessage.getCommandLogMessageId() + "]");
+				list.add(commandLogAction.getName());
 				list.add("Message");
-				list.add(commandLogMessage.getIndex());
-				list.add(commandLogMessage.getTimestamp());
+				list.add(format(commandLogMessage.getTimestamp()));
 				list.add(commandLogMessage.getLevel());
-				list.add(commandLogMessage.getMessage());
-				list.add(commandLogMessage.getException());
+				list.add("<pre>" + coalesce(commandLogMessage.getMessage(), commandLogMessage.getException(), "") + "</pre>");
 				rows.add(list);
 			}
 
-			list = new ArrayList<Object>();
-			list.add(CommandLogAction.ID + "[" + commandLogAction.getCommandLogActionId() + "]");
-			list.add("Action");
-			list.add(commandLogAction.getIndex());
-			list.add(commandLogAction.getEnd());
-			list.add("");
-			list.add("");
-			list.add("");
-			rows.add(list);
+			if (commandLogAction.getEnd() != null) {
+				list = new ArrayList<Object>();
+				list.add(commandLogAction.getName());
+				list.add("End");
+				list.add(format(commandLogAction.getEnd()));
+				list.add("");
+				list.add("");
+				rows.add(list);
+			}
+
 		}
 
 		var table = Table.parse(columns, rows);
@@ -117,28 +114,44 @@ public class LogJobServlet extends ServletBase {
 		var cljhtml = p(
 				text(CommandLogAction.ID + "[" + commandLogJobId + "]"),
 				br(),
-				text("Start: " + commandLogJob.getStart()),
+				text("Start: " + format(commandLogJob.getStart())),
 				br(),
-				text("End: " + commandLogJob.getEnd()),
+				text("End: " + format(commandLogJob.getEnd())),
 				br(),
 				text("Error: " + commandLogJob.isError()),
 				br());
 
 		var sb = new StringBuilder();
 		sb.append(cljhtml);
-		sb.append(table.toHtml());
+		sb.append("<p>");
+		var htmlFormatter = new Table.HtmlFormatter() {
+			@Override
+			public void colgroup(StringBuilder sb, List<String> columns) {
+				sb.append("<colgroup>");
+				sb.append("<col style=\"width: 15%;\">");
+				sb.append("<col style=\"width: 10%;\">");
+				sb.append("<col style=\"width: 15%;\">");
+				sb.append("<col style=\"width: 10%;\">");
+				sb.append("<col style=\"width: 50%;\">");
+				sb.append("</colgroup>");
+			}
+		};
+		sb.append(table.toHtml(htmlFormatter));
+		sb.append("</p>");
 
 		writeResponse(response, CommandLogAction.ID + "[" + commandLogJobId + "]", sb.toString(), 200);
 
 	}
 
+	private static String format(LocalDateTime datetime) {
+		if (datetime == null) return "";
+		var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		return datetime.format(formatter);
+	}
+
 	private void doGetShowLogAll(HttpServletRequest request, HttpServletResponse response, Integer schedulerJobId) throws ServletException, IOException {
 		var commandLogJobs = data.getCommandLogJob(null, schedulerJobId);
 
-		var sb = new StringBuilder();
-
-		int currentSchedulerJobId = -1;
-		
 		var map = new TreeMap<Integer, ArrayList<CommandLogJob>>();
 		for (var commandLogJob : commandLogJobs) {
 			schedulerJobId = commandLogJob.getSchedulerJob().getSchedulerJobId();
@@ -149,26 +162,35 @@ public class LogJobServlet extends ServletBase {
 			}
 			list.add(commandLogJob);
 		}
-		
-		for(var schedulerJobId2 : map.keySet()) {
+
+		var sb = new StringBuilder();
+		for (var schedulerJobId2 : map.keySet()) {
 			var commandLogJobs2 = map.get(schedulerJobId2);
 			Collections.sort(commandLogJobs2, CommandLogJob.SORT_JOB);
-			commandLogJobs2.
-		}
-		
-			var schedules = new ArrayList<SchedulerSchedule>(job.getSchedulerSchedules());
-			Collections.sort(schedules, SchedulerSchedule.SORT_ID);
-			var table = toTable(schedules);
+			LOG.debug("Displaying for Job[" + schedulerJobId2 + "]");
 			sb.append("<p>");
-			var link = a("Add").withHref("/schedules" + parameters(SchedulerJob.ID, job.getSchedulerJobId(), "action", "add"));
-			// var link = <a href="https://www.w3schools.com/">Visit W3Schools.com!</a>
-			sb.append(h2("Job[" + job.getSchedulerJobId() + "] " + job.getName()));
-			sb.append(link);
+			sb.append(SchedulerJob.NAME + "[" + schedulerJobId2 + "] " + commandLogJobs2.get(0).getSchedulerJob().getName());
+			sb.append("</p>");
+
+			sb.append("<p>");
+			var tableColumns = List.of("", "Start", "End", "Is Error");
+			var tableList = new ArrayList<ArrayList<String>>();
+			for (var commandLogJob2 : commandLogJobs2) {
+				var list = new ArrayList<String>();
+				var link = a("View").withHref("/logs" + parameters(CommandLogJob.ID, commandLogJob2.getCommandLogJobId()));
+				list.add(link.renderFormatted());
+				list.add(commandLogJob2.getStart() != null ? format(commandLogJob2.getStart()) : "");
+				list.add(commandLogJob2.getEnd() != null ? format(commandLogJob2.getEnd()) : "");
+				list.add("" + commandLogJob2.isError());
+				tableList.add(list);
+			}
+
+			var table = Table.parse(tableColumns, tableList);
 			sb.append(table.toHtml());
-			sb.append("</p><br><br>");
+			sb.append("</p>");
 		}
 
-	writeResponse(response, "Schedules", sb.toString(), 200);
+		writeResponse(response, "CommandLogJobs", sb.toString(), 200);
 
 	}
 

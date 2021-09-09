@@ -136,6 +136,17 @@ public class CommandLogAction implements JsonCodable {
 		this.index = index;
 	}
 
+	@Column(length = 200, nullable = true, unique = false)
+	private String name;
+
+	public String getName() {
+		return trimOrNull(name);
+	}
+
+	public void setName(String name) {
+		this.name = trimOrNull(name);
+	}
+
 	@Override
 	public JsonObject toJson() {
 		var json = createObjectBuilder();
@@ -145,6 +156,7 @@ public class CommandLogAction implements JsonCodable {
 		json.add("start", getStart() == null ? "" : getStart().toString());
 		json.add("end", getEnd() == null ? "" : getEnd().toString());
 		json.add("index", getIndex());
+		json.add("name", coalesce(getName(), ""));
 		json.add(SchedulerAction.NAME, getSchedulerAction().toJson());
 		var arrayBuilder = createArrayBuilder();
 		for (var commandLogMessage : getCommandLogMessages()) {
@@ -158,6 +170,7 @@ public class CommandLogAction implements JsonCodable {
 	@Override
 	public void fromJson(JsonObject o) {
 		this.setCommandLogActionId(o.getInt(ID));
+		this.setName(o.getString("name"));
 		var st = trimOrNull(o.getString("start"));
 		if (st != null) this.setStart(LocalDateTime.parse(st));
 		var en = trimOrNull(o.getString("end"));

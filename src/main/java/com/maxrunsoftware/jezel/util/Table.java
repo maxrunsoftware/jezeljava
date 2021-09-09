@@ -15,85 +15,112 @@
  */
 package com.maxrunsoftware.jezel.util;
 
-import static com.google.common.base.Preconditions.*;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Table {
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(Table.class);
 
-	private final ImmutableList<String> columns;
+	private final List<String> columns;
 
-	public ImmutableList<String> getColumns() {
+	public List<String> getColumns() {
 		return columns;
 	}
 
-	private final ImmutableList<ImmutableList<String>> rows;
+	private final List<List<String>> rows;
 
-	public ImmutableList<ImmutableList<String>> getRows() {
+	public List<List<String>> getRows() {
 		return rows;
 	}
 
-	public Table(ImmutableList<String> columns, ImmutableList<ImmutableList<String>> rows) {
-		this.columns = checkNotNull(columns);
-		this.rows = checkNotNull(rows);
+	public <T extends List<String>> Table(List<String> columns, List<T> rows) {
+		int maxRowLength = columns.size();
+		for (var row : rows) {
+			maxRowLength = Math.max(maxRowLength, row.size());
+		}
 
+		var newColumns = new ArrayList<String>();
+		for (int i = 0; i < maxRowLength; i++) {
+			if (i < columns.size()) {
+				newColumns.add(columns.get(i));
+			} else {
+				newColumns.add("Column" + (i + 1));
+			}
+		}
+		this.columns = Collections.unmodifiableList(newColumns);
+
+		var newRows = new ArrayList<List<String>>();
+		for (var row : rows) {
+			var newRow = new ArrayList<String>();
+			for (int i = 0; i < maxRowLength; i++) {
+				if (i < row.size()) {
+					newRow.add(row.get(i));
+				} else {
+					String s = null;
+					newRow.add(s);
+				}
+			}
+			newRows.add(Collections.unmodifiableList(newRow));
+		}
+		this.rows = Collections.unmodifiableList(newRows);
 	}
 
 	public static <T extends Iterable<? extends Object>> Table parse(Iterable<String> columns, Iterable<T> rows) {
-		var cols = ImmutableList.copyOf(columns);
-		var b = ImmutableList.<ImmutableList<String>>builder();
-		for (var row : rows) {
-			var bb = ImmutableList.<String>builder();
-			for (var cell : row) {
-				bb.add(cell == null ? null : cell.toString());
-			}
-			b.add(bb.build());
+		var cols = new ArrayList<String>();
+		for (var c : columns) {
+			cols.add(c);
 		}
-		return new Table(cols, b.build());
+
+		var rs = new ArrayList<ArrayList<String>>();
+		for (var row : rows) {
+			var list = new ArrayList<String>();
+			for (var cell : row) {
+				list.add(cell == null ? null : cell.toString());
+			}
+			rs.add(list);
+		}
+		return new Table(cols, rs);
 	}
 
 	public static Table parse(ResultSet resultSet) throws SQLException {
 		var meta = resultSet.getMetaData();
 		var len = meta.getColumnCount();
-		var columnsBuilder = ImmutableList.<String>builder();
+		var columns = new ArrayList<String>();
 		for (int i = 1; i <= len; i++) {
-			columnsBuilder.add(coalesce(meta.getColumnLabel(i), meta.getColumnName(i), "Column" + i));
+			columns.add(coalesce(meta.getColumnLabel(i), meta.getColumnName(i), "Column" + i));
 		}
-		var columns = columnsBuilder.build();
 
-		var rowsBuilder = ImmutableList.<ImmutableList<String>>builder();
+		var rows = new ArrayList<List<String>>();
 		while (resultSet.next()) {
-			var rowBuilder = ImmutableList.<String>builder();
+			var row = new ArrayList<String>();
 			for (int i = 1; i <= len; i++) {
 				var val = resultSet.getString(i);
 				if (trimOrNull(val) == null) val = null;
-				rowBuilder.add(val);
+				row.add(val);
 			}
-			rowsBuilder.add(rowBuilder.build());
+			rows.add(row);
 		}
-
-		var rows = rowsBuilder.build();
 
 		return new Table(columns, rows);
 	}
 
-	public static ImmutableList<Table> parse(PreparedStatement statement) throws SQLException {
+	public static List<Table> parse(PreparedStatement statement) throws SQLException {
 		boolean isResultSet = statement.execute();
 
-		var tablesBuilder = ImmutableList.<Table>builder();
+		var tables = new ArrayList<Table>();
 
 		int count = 0;
 		while (true) {
 			if (isResultSet) {
 				try (var resultSet = statement.getResultSet()) {
 					var table = parse(resultSet);
-					tablesBuilder.add(table);
+					tables.add(table);
 				}
 
 			} else {
@@ -105,33 +132,54 @@ public class Table {
 			count++;
 			isResultSet = statement.getMoreResults();
 		}
-		return tablesBuilder.build();
+		return tables;
 	}
 
 	public String toHtml() {
+		return toHtml(new HtmlFormatter());
+	}
+
+	public String toHtml(HtmlFormatter formatter) {
 		var sb = new StringBuilder();
 		sb.append("<table>");
+		formatter.colgroup(sb, columns);
 		sb.append("<thead>");
 		sb.append("<tr>");
+		int colIndex = 0;
 		for (var col : getColumns()) {
-			sb.append("<th>");
-			sb.append(coalesce(col, ""));
-			sb.append("</th>");
+			formatter.th(sb, colIndex, col);
+			colIndex++;
 		}
 		sb.append("</tr>");
 		sb.append("</thead>");
 		sb.append("<tbody>");
+		var rowIndex = 0;
 		for (var row : getRows()) {
 			sb.append("<tr>");
+			colIndex = 0;
 			for (var cell : row) {
-				sb.append("<td>");
-				sb.append(coalesce(cell, ""));
-				sb.append("</td>");
+				formatter.td(sb, rowIndex, colIndex, cell);
+				colIndex++;
 			}
 			sb.append("</tr>");
+			rowIndex++;
 		}
 		sb.append("</tbody>");
 		sb.append("</table>");
 		return sb.toString();
+	}
+
+	public static class HtmlFormatter {
+		public void th(StringBuilder sb, int columnIndex, String columnName) {
+			sb.append("<th>" + coalesce(columnName, "") + "</th>");
+		}
+
+		public void td(StringBuilder sb, int rowIndex, int columnIndex, String content) {
+			sb.append("<td>" + coalesce(content, "") + "</td>");
+		}
+
+		public void colgroup(StringBuilder sb, List<String> columns) {
+
+		}
 	}
 }

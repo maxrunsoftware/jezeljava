@@ -61,6 +61,7 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 			  font-family: Arial, Helvetica, sans-serif;
 			  border-collapse: collapse;
 			  width: 100%;
+			  table-layout: fixed;
 			}
 			th {
 			  border: 1px solid #ddd;
@@ -78,8 +79,12 @@ public abstract class ServletBase extends com.maxrunsoftware.jezel.util.ServletB
 			  border: 1px solid #ddd;
 			  padding: 8px;
 			  width: 1px;
-			  white-space: nowrap;
+			  white-space: normal;
+			  word-break: break-word;
+			  text-wrap: normal;
 			}
+
+
 			tr:nth-child(even){background-color: #f2f2f2;}
 			tr:hover {background-color: #ddd;}
 

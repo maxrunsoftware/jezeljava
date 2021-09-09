@@ -27,6 +27,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 
 import com.maxrunsoftware.jezel.JsonCodable;
@@ -97,7 +98,8 @@ public class CommandLogMessage implements JsonCodable {
 		this.timestamp = timestamp;
 	}
 
-	@Column(length = 1000, nullable = true, unique = false)
+	@Lob
+	@Column(nullable = true, unique = false)
 	private String message;
 
 	public String getMessage() {
@@ -108,7 +110,8 @@ public class CommandLogMessage implements JsonCodable {
 		this.message = trimOrNull(message);
 	}
 
-	@Column(length = 4000, nullable = true, unique = false)
+	@Lob
+	@Column(nullable = true, unique = false)
 	private String exception;
 
 	public String getException() {

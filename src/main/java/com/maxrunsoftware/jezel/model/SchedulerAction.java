@@ -89,11 +89,11 @@ public class SchedulerAction implements JsonCodable {
 	private String name;
 
 	public String getName() {
-		return name;
+		return trimOrNull(name);
 	}
 
 	public void setName(String name) {
-		this.name = name;
+		this.name = trimOrNull(name);
 	}
 
 	@Column(length = 1000, nullable = true, unique = false)

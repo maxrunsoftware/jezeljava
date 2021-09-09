@@ -26,6 +26,8 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.DatabaseService;
 import com.maxrunsoftware.jezel.Util;
@@ -85,6 +87,7 @@ public class SchedulerServiceSchedulerJob {
 			var commandLogAction = new CommandLogAction();
 			commandLogAction.setCommandLogJob(commandLogJob);
 			commandLogAction.setSchedulerAction(schedulerAction);
+			commandLogAction.setName(schedulerAction.getName());
 			commandLogAction.setIndex(actionIndex);
 			commandLogAction.setStart(LocalDateTime.now());
 			commandLogActionId = save(session, commandLogAction);
@@ -99,7 +102,10 @@ public class SchedulerServiceSchedulerJob {
 			command.setParameters(action.getParameters());
 			command.execute();
 		} catch (Throwable t) {
-			schedulerServiceSchedulerJobLog.error(t);
+			LOG.warn("Encountered error: " + t);
+			schedulerServiceSchedulerJobLog.error(ExceptionUtils.getStackTrace(t));
+
+			ExceptionUtils.getStackTrace(t);
 			successfulExection = false;
 		}
 
@@ -154,6 +160,7 @@ public class SchedulerServiceSchedulerJob {
 			boolean successfulExecution = true;
 			for (var action : actions) {
 				successfulExecution = execute(action, actionIndex, commandLogJobId);
+				LOG.debug("Received successful execution: " + successfulExecution);
 				if (!successfulExecution) break;
 
 				actionIndex++;
