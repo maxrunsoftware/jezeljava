@@ -173,4 +173,12 @@ public class DataService {
 		return schedulerScheduleId;
 	}
 
+	public void deleteSchedulerSchedule(int schedulerScheduleId) throws IOException {
+		client.get(
+				Verb.DELETE,
+				"job/schedule",
+				par(SchedulerSchedule.ID, schedulerScheduleId));
+
+	}
+
 }

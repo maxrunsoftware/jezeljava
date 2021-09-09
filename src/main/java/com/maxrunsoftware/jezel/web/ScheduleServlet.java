@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.maxrunsoftware.jezel.model.SchedulerJob;
 import com.maxrunsoftware.jezel.model.SchedulerSchedule;
 import com.maxrunsoftware.jezel.util.Table;
@@ -47,6 +49,10 @@ public class ScheduleServlet extends ServletBase {
 		} else if (schedulerJobId != null && schedulerScheduleId != null && action.equalsIgnoreCase("edit")) {
 			// Edit
 			doGetShowScheduleSingle(request, response, schedulerJobId, schedulerScheduleId, null);
+		} else if (schedulerJobId != null && schedulerScheduleId != null && action.equalsIgnoreCase("delete")) {
+			// Delete
+			data.deleteSchedulerSchedule(schedulerScheduleId);
+			doGetShowScheduleAll(request, response, schedulerJobId);
 		} else if (schedulerJobId != null) {
 			// Show for Job
 			doGetShowScheduleAll(request, response, schedulerJobId);
@@ -126,6 +132,7 @@ public class ScheduleServlet extends ServletBase {
 			throws ServletException, IOException {
 
 		var title = "Schedule[" + schedulerScheduleId + "]";
+		if (schedulerScheduleId == null) title = "New Schedule";
 
 		List<SchedulerSchedule> schedules = new ArrayList<SchedulerSchedule>();
 		if (schedulerScheduleId == null) {
@@ -214,15 +221,25 @@ public class ScheduleServlet extends ServletBase {
 	}
 
 	private Table toTable(Iterable<SchedulerSchedule> schedules) {
-		var cols = List.of("", "SchedulerScheduleId", "SchedulerJobId", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Hour", "Minute", "Enabled");
+		var cols = List.of("", "", "SchedulerScheduleId", "SchedulerJobId", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Time", "Enabled");
 		var rows = new ArrayList<List<Object>>();
 
 		for (var schedule : schedules) {
 			var schedulerScheduleId = schedule.getSchedulerScheduleId();
 			var schedulerJobId = schedule.getSchedulerJob().getSchedulerJobId();
 			var parsEdit = parameters(SchedulerJob.ID, schedulerJobId, SchedulerSchedule.ID, schedulerScheduleId, "action", "edit");
+			var parsDelete = parameters(SchedulerJob.ID, schedulerJobId, SchedulerSchedule.ID, schedulerScheduleId, "action", "delete");
+
 			var list = new ArrayList<Object>();
+			var hour = schedule.getHour();
+			var ampm = hour >= 12 ? "pm" : "am";
+			if (hour > 12) hour = hour - 12;
+			if (hour == 0) hour = 12;
+			var minute = StringUtils.right("00" + schedule.getMinute(), 2);
+			var time = "" + hour + ":" + minute + " " + ampm;
+
 			list.add(a("Edit").withHref("/schedules" + parsEdit));
+			list.add(a("Delete").withHref("/schedules" + parsDelete));
 			list.add(a("Schedule[" + schedulerScheduleId + "]").withHref("/schedules" + parsEdit));
 			list.add(a("Job[" + schedulerJobId + "]").withHref("/jobs" + parameters(SchedulerJob.ID, schedulerJobId)));
 			list.add(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(schedule.isSunday()));
@@ -232,8 +249,7 @@ public class ScheduleServlet extends ServletBase {
 			list.add(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(schedule.isThursday()));
 			list.add(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(schedule.isFriday()));
 			list.add(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(schedule.isSaturday()));
-			list.add(schedule.getHour());
-			list.add(schedule.getMinute());
+			list.add(time);
 			list.add(input().attr("type", "checkbox").attr("disabled", "disabled").withCondChecked(!schedule.isDisabled()));
 			rows.add(list);
 		}
