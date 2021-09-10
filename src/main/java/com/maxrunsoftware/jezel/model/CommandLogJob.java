@@ -56,7 +56,7 @@ public class CommandLogJob implements JsonCodable {
 	};
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int commandLogJobId;
 
 	public int getCommandLogJobId() {

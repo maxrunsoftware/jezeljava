@@ -56,7 +56,7 @@ public class CommandLogAction implements JsonCodable {
 	};
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int commandLogActionId;
 
 	public int getCommandLogActionId() {

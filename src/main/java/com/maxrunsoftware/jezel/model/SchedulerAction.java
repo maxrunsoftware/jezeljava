@@ -38,7 +38,7 @@ public class SchedulerAction implements JsonCodable {
 	public static final String ID = NAME + "Id";
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int schedulerActionId;
 
 	public int getSchedulerActionId() {

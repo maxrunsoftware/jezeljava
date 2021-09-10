@@ -53,7 +53,7 @@ public class CommandLogMessage implements JsonCodable {
 	};
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int commandLogMessageId;
 
 	public int getCommandLogMessageId() {

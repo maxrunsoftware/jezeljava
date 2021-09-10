@@ -58,7 +58,7 @@ public class SchedulerJob implements JsonCodable {
 	};
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int schedulerJobId;
 
 	public int getSchedulerJobId() {

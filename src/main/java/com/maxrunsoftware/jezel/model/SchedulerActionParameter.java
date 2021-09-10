@@ -34,7 +34,7 @@ public class SchedulerActionParameter implements JsonCodable {
 	public static final String ID = NAME + "Id";
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int schedulerActionParameterId;
 
 	public int getSchedulerActionParameterId() {
@@ -101,6 +101,7 @@ public class SchedulerActionParameter implements JsonCodable {
 		return json.build();
 	}
 
+	@Override
 	public void fromJson(JsonObject o) {
 		this.setSchedulerActionParameterId(o.getInt(ID));
 		this.setName(o.getString("name"));
