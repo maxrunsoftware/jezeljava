@@ -31,11 +31,12 @@ public abstract class CommandBase implements Command {
 
 	@Override
 	public void setParameters(Map<String, String> parameters) {
+		this.parameters.clear();
 		for (var key : parameters.keySet()) {
 			var val = parameters.get(key);
 			if (val != null) {
 				LOG.debug(key + ": " + val);
-				parameters.put(key, val);
+				this.parameters.put(key, val);
 			}
 		}
 	}

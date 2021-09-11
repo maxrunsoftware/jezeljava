@@ -15,7 +15,11 @@
  */
 package com.maxrunsoftware.jezel;
 
+import java.util.Map;
+
 public interface ConfigurationService {
+
+	public Map<String, String> getConfigurationItems();
 
 	public String getConfigurationItem(String key);
 

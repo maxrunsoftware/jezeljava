@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.*;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -26,6 +27,7 @@ import org.hibernate.Session;
 
 import com.maxrunsoftware.jezel.ConfigurationService;
 import com.maxrunsoftware.jezel.DatabaseService;
+import com.maxrunsoftware.jezel.Util;
 import com.maxrunsoftware.jezel.model.ConfigurationItem;
 
 public class ConfigurationServiceDatabase implements ConfigurationService {
@@ -91,6 +93,21 @@ public class ConfigurationServiceDatabase implements ConfigurationService {
 				save(session, item);
 			}
 		}
+	}
+
+	@Override
+	public Map<String, String> getConfigurationItems() {
+		var map = Util.<String>mapCaseInsensitive();
+
+		try (var session = db.openSession()) {
+			var list = getAllConfigurationItems(session);
+
+			for (var item : list) {
+				map.put(item.getName().toLowerCase(), item.getValue());
+			}
+		}
+
+		return map;
 	}
 
 }
