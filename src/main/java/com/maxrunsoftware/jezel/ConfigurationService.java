@@ -15,6 +15,9 @@
  */
 package com.maxrunsoftware.jezel;
 
+import static com.google.common.base.Preconditions.*;
+import static com.maxrunsoftware.jezel.Util.*;
+
 import java.util.Map;
 
 public interface ConfigurationService {
@@ -24,4 +27,31 @@ public interface ConfigurationService {
 	public String getConfigurationItem(String key);
 
 	public void setConfigurationItem(String key, Object value);
+
+	public default void clearConfigurationItems() {
+		var map = getConfigurationItems();
+		for (var key : map.keySet()) {
+			setConfigurationItem(key, null);
+		}
+	}
+
+	public default Map<String, String> getConfigurationItemsPrefixed(String prefix) {
+		var map = Util.<String>mapCaseInsensitive();
+		prefix = checkNotNull(trimOrNull(prefix)).toLowerCase();
+		if (!prefix.endsWith(".")) prefix += ".";
+		var items = getConfigurationItems();
+		for (var key : items.keySet()) {
+			var val = items.get(key);
+			if (val == null) continue;
+
+			if (key.toLowerCase().startsWith(prefix)) {
+				var name = trimOrNull(key.substring(prefix.length()));
+				if (name == null) continue;
+
+				map.put(name, val);
+			}
+		}
+
+		return map;
+	}
 }

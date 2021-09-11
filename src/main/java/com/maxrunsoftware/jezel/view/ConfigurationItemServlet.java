@@ -18,6 +18,7 @@ package com.maxrunsoftware.jezel.view;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
+import java.util.Collections;
 
 import com.maxrunsoftware.jezel.model.ConfigurationItem;
 
@@ -58,12 +59,22 @@ public class ConfigurationItemServlet extends ServletBase {
 
 	@Override
 	protected void doPostAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var name = trimOrNull(getParameter(request, "name"));
-		if (name == null) { writeResponse(response, RESPONSE_STATUS_FAILED, "No 'name' parameter provided to update ConfigurationItem", 400); }
+		for (var pName : Collections.list(request.getParameterNames())) {
+			var pValue = trimOrNull(request.getParameter(pName));
+			pName = trimOrNull(pName);
+			if (pName == null) continue;
+			pName = pName.toLowerCase();
 
-		var value = trimOrNull(getParameter(request, "value"));
+			config.setConfigurationItem(pName, pValue);
+		}
 
-		config.setConfigurationItem(name, value);
 		writeResponse(response, RESPONSE_STATUS_SUCCESS, "ConfigurationItem successfully saved", 200);
 	}
+
+	@Override
+	protected void doDeleteAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		config.clearConfigurationItems();
+		writeResponse(response, RESPONSE_STATUS_SUCCESS, "ConfigurationItems successfully deleted", 200);
+	}
+
 }

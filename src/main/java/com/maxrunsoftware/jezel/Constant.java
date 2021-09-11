@@ -79,7 +79,8 @@ public class Constant {
 			new Page(com.maxrunsoftware.jezel.web.HomeServlet.class, "/*"),
 			new Page(com.maxrunsoftware.jezel.web.JobServlet.class, "/jobs"),
 			new Page(com.maxrunsoftware.jezel.web.ScheduleServlet.class, "/schedules"),
-			new Page(com.maxrunsoftware.jezel.web.LogJobServlet.class, "/logs")
+			new Page(com.maxrunsoftware.jezel.web.LogJobServlet.class, "/logs"),
+			new Page(com.maxrunsoftware.jezel.web.ConfigServlet.class, "/config")
 
 	);
 

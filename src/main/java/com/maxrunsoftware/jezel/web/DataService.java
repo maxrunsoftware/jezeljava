@@ -21,8 +21,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import com.maxrunsoftware.jezel.Util;
 import com.maxrunsoftware.jezel.model.CommandLogJob;
+import com.maxrunsoftware.jezel.model.ConfigurationItem;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
 import com.maxrunsoftware.jezel.model.SchedulerSchedule;
 import com.maxrunsoftware.jezel.web.RestClient.ParamNameValue;
@@ -202,4 +205,28 @@ public class DataService {
 		return list;
 	}
 
+	public Map<String, String> getConfigurationItems() throws IOException {
+		var response = client.get(Verb.GET,
+				"config");
+
+		var o = response.jsonObject();
+		var array = o.getJsonArray(ConfigurationItem.NAME);
+		var map = Util.<String>mapCaseInsensitive();
+		for (var val : array) {
+			var oo = val.asJsonObject();
+			var name = oo.getString("name");
+			var value = oo.getString("value");
+			map.put(name, value);
+		}
+		return map;
+	}
+
+	public void saveConfigurationItems(Map<String, String> map) throws IOException {
+
+		var response = client.get(Verb.GET,
+				"log/job",
+				par(CommandLogJob.ID, commandLogJob),
+				par(SchedulerJob.ID, schedulerJobId));
+
+	}
 }

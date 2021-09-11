@@ -28,6 +28,7 @@ import javax.inject.Inject;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import com.maxrunsoftware.jezel.ConfigurationService;
 import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.DatabaseService;
 import com.maxrunsoftware.jezel.Util;
@@ -44,14 +45,21 @@ public class SchedulerServiceSchedulerJob {
 		private final String schedulerActionName;
 		private final Map<String, String> parameters;
 
-		public ActionItem(SchedulerAction schedulerAction) {
+		public ActionItem(SchedulerAction schedulerAction, ConfigurationService config) {
 			this.schedulerActionId = schedulerAction.getSchedulerActionId();
 			this.schedulerActionName = schedulerAction.getName();
+
 			parameters = Util.mapCaseInsensitive();
+
+			var parametersDefault = config.getConfigurationItemsPrefixed(schedulerActionName);
+			for (var key : parametersDefault.keySet()) {
+				parameters.put(key, parametersDefault.get(key));
+			}
+
 			for (var schedulerActionParameter : schedulerAction.getSchedulerActionParameters()) {
 				var key = schedulerActionParameter.getName();
 				var val = schedulerActionParameter.getValue();
-				getParameters().put(key, val);
+				parameters.put(key, val);
 			}
 
 		}
@@ -72,10 +80,12 @@ public class SchedulerServiceSchedulerJob {
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(SchedulerServiceSchedulerJob.class);
 
 	private final DatabaseService db;
+	private final ConfigurationService config;
 
 	@Inject
-	public SchedulerServiceSchedulerJob(DatabaseService db) {
+	public SchedulerServiceSchedulerJob(DatabaseService db, ConfigurationService config) {
 		this.db = checkNotNull(db);
+		this.config = checkNotNull(config);
 	}
 
 	private boolean execute(ActionItem action, int actionIndex, int commandLogJobId) {
@@ -152,7 +162,7 @@ public class SchedulerServiceSchedulerJob {
 				commandLogJobId = save(session, commandLogJob);
 
 				for (var schedulerAction : schedulerJob.getSchedulerActions()) {
-					actions.add(new ActionItem(schedulerAction));
+					actions.add(new ActionItem(schedulerAction, config));
 				}
 			}
 
