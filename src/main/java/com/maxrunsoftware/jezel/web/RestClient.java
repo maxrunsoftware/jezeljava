@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.*;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.json.JsonObject;
 
@@ -71,6 +72,16 @@ public class RestClient {
 
 	private Response get(Verb verb, String host, String bearer) throws Exception {
 		return get(verb, host, null, null, bearer);
+	}
+
+	public Response get(Verb verb, String hostSuffix, Iterable<ParamNameValue> params) throws IOException {
+		var list = new ArrayList<ParamNameValue>();
+		for (var param : params) {
+			list.add(param);
+		}
+
+		var array = list.toArray(ParamNameValue[]::new);
+		return get(verb, hostSuffix, array);
 	}
 
 	public Response get(Verb verb, String hostSuffix, ParamNameValue... params) throws IOException {

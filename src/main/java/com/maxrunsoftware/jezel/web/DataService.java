@@ -22,8 +22,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
-import com.maxrunsoftware.jezel.Util;
+import com.google.common.collect.Lists;
 import com.maxrunsoftware.jezel.model.CommandLogJob;
 import com.maxrunsoftware.jezel.model.ConfigurationItem;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
@@ -34,6 +35,7 @@ import com.maxrunsoftware.jezel.web.RestClient.Verb;
 public class DataService {
 
 	private final RestClient client;
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(DataService.class);
 
 	public DataService(RestClient client) {
 		this.client = checkNotNull(client);
@@ -211,7 +213,7 @@ public class DataService {
 
 		var o = response.jsonObject();
 		var array = o.getJsonArray(ConfigurationItem.NAME);
-		var map = Util.<String>mapCaseInsensitive();
+		var map = new TreeMap<String, String>();
 		for (var val : array) {
 			var oo = val.asJsonObject();
 			var name = oo.getString("name");
@@ -221,12 +223,28 @@ public class DataService {
 		return map;
 	}
 
+	private static record ConfigItem(String name, String value) {}
+
 	public void saveConfigurationItems(Map<String, String> map) throws IOException {
 
-		var response = client.get(Verb.GET,
-				"log/job",
-				par(CommandLogJob.ID, commandLogJob),
-				par(SchedulerJob.ID, schedulerJobId));
+		LOG.debug("Issuing DELETE for existing configuration");
+		client.get(Verb.DELETE, "config");
+
+		var list = new ArrayList<ConfigItem>();
+		for (var name : map.keySet()) {
+			list.add(new ConfigItem(name, map.get(name)));
+		}
+
+		var listParts = Lists.partition(list, 10);
+
+		for (var listPart : listParts) {
+			var pars = new ArrayList<ParamNameValue>();
+			for (var configItem : listPart) {
+				pars.add(par(configItem.name, configItem.value));
+			}
+			LOG.debug("Issuing POST to add new configurations");
+			client.get(Verb.POST, "config", pars);
+		}
 
 	}
 }

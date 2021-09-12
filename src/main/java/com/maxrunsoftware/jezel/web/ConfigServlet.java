@@ -38,20 +38,29 @@ public class ConfigServlet extends ServletBase {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		var sb = new StringBuilder();
 		var configs = data.getConfigurationItems();
-		sb.append("<form>");
+		sb.append("<form method=\"post\">");
 		int i = 0;
 		for (var name : configs.keySet()) {
 			var value = configs.get(name);
 			var prefix = StringUtils.right("0000" + i, 4);
+			sb.append("<div>");
 			sb.append(input().withType("text").withId(prefix + "n").withName(prefix + "n").withValue(name));
+			sb.append(" : ");
 			sb.append(input().withType("text").withId(prefix + "v").withName(prefix + "v").withValue(value));
+			sb.append("</div>");
+			sb.append("<br>");
 			i++;
 		}
 
 		for (int j = 0; j < 10; j++) {
 			var prefix = StringUtils.right("0000" + (i + j), 4);
-			sb.append(input().withType("text").withId(prefix + "name").withName(prefix + "name"));
-			sb.append(input().withType("text").withId(prefix + "value").withName(prefix + "value"));
+
+			sb.append("<div>");
+			sb.append(input().withType("text").withId(prefix + "n").withName(prefix + "n"));
+			sb.append(" : ");
+			sb.append(input().withType("text").withId(prefix + "v").withName(prefix + "v"));
+			sb.append("</div>");
+			sb.append("<br>");
 		}
 
 		sb.append(input().withType("submit").withValue("Save"));
@@ -68,7 +77,8 @@ public class ConfigServlet extends ServletBase {
 		var mapValues = new TreeMap<Integer, String>();
 
 		for (var pName : Collections.list(request.getParameterNames())) {
-			var pValue = request.getParameter(pName);
+			var pValue = trimOrNull(request.getParameter(pName));
+			LOG.debug(pName + ": " + pValue);
 			pName = trimOrNull(pName);
 			if (pName == null) continue;
 			pName = pName.toLowerCase();
@@ -82,14 +92,23 @@ public class ConfigServlet extends ServletBase {
 			var partNum = parseInt(pName.substring(0, 4));
 			var partType = pName.substring(4);
 			if (partType.equals("n")) {
+				if (pValue == null) continue;
 				mapNames.put(partNum, pValue);
-			} else if (partType.equals("v")) { mapValues.put(partNum, pValue); }
-
+			} else if (partType.equals("v")) {
+				// Add to value map
+				mapValues.put(partNum, pValue);
+			}
 		}
 
 		var map = Util.<String>mapCaseInsensitive();
 
-		getParameter(request, "dfkj");
+		for (var key : mapNames.keySet()) {
+			var name = mapNames.get(key);
+			var value = mapValues.get(key);
+			map.put(name, value);
+		}
+
+		data.saveConfigurationItems(map);
 
 		doGet(request, response);
 	}
