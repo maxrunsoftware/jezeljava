@@ -207,20 +207,22 @@ public class DataService {
 		return list;
 	}
 
-	public Map<String, String> getConfigurationItems() throws IOException {
+	public List<ConfigurationItem> getConfigurationItems() throws IOException {
+		var map = new TreeMap<String, ConfigurationItem>();
+
 		var response = client.get(Verb.GET,
 				"config");
 
 		var o = response.jsonObject();
 		var array = o.getJsonArray(ConfigurationItem.NAME);
-		var map = new TreeMap<String, String>();
 		for (var val : array) {
 			var oo = val.asJsonObject();
-			var name = oo.getString("name");
-			var value = oo.getString("value");
-			map.put(name, value);
+			var ci = new ConfigurationItem();
+			ci.fromJson(oo);
+			map.put(ci.getName(), ci);
 		}
-		return map;
+
+		return new ArrayList<ConfigurationItem>(map.values());
 	}
 
 	private static record ConfigItem(String name, String value) {}

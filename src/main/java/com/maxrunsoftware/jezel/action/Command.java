@@ -18,6 +18,8 @@ package com.maxrunsoftware.jezel.action;
 import java.util.List;
 import java.util.Map;
 
+import com.maxrunsoftware.jezel.model.ConfigurationItem;
+
 public interface Command {
 	public void setParameters(Map<String, String> parameters);
 
@@ -25,5 +27,5 @@ public interface Command {
 
 	public void execute() throws Exception;
 
-	public List<ParameterDetail> getParameterDetails();
+	public List<ConfigurationItem> getParameterDetails();
 }

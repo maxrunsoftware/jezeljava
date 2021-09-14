@@ -40,14 +40,14 @@ public class App {
 	private final WebService webServer;
 	private final SettingService settings;
 	private final SchedulerService scheduler;
-	private final DatabaseService db;
+	private final ConfigurationService config;
 
 	@Inject
-	public App(WebService webServer, SettingService settings, SchedulerService scheduler, DatabaseService db) {
+	public App(WebService webServer, SettingService settings, SchedulerService scheduler, ConfigurationService config) {
 		this.webServer = checkNotNull(webServer);
 		this.settings = checkNotNull(settings);
 		this.scheduler = checkNotNull(scheduler);
-		this.db = checkNotNull(db);
+		this.config = checkNotNull(config);
 
 		var map = settings.toMap();
 		for (var key : map.keySet()) {

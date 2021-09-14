@@ -19,7 +19,9 @@ import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.TreeMap;
 
+import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.model.ConfigurationItem;
 
 import jakarta.servlet.ServletException;
@@ -32,25 +34,43 @@ public class ConfigurationItemServlet extends ServletBase {
 
 	@Override
 	protected void doGetAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var map = config.getConfigurationItems();
 
-		var arrayBuilder = createArrayBuilder();
-		for (var key : map.keySet()) {
-			var name = trimOrNull(key);
-			if (name == null) continue;
-			name = name.toLowerCase();
-			var val = map.get(key);
-			if (val == null) continue;
+		var map = new TreeMap<String, ConfigurationItem>();
+		for (var commandClass : Constant.COMMANDS) {
+			try {
+				var commandClassInstance = commandClass.getDeclaredConstructor().newInstance();
+				for (var configItem : commandClassInstance.getParameterDetails()) {
+					var key = commandClass.getSimpleName().toLowerCase();
+					key += ".";
+					key += configItem.getName();
+					map.put(key, configItem);
+				}
+			} catch (Exception e) {
+				throw new Error(e);
+			}
+		}
 
-			var objectBuilder = createObjectBuilder();
-			objectBuilder.add("name", name);
-			objectBuilder.add("value", val);
-			arrayBuilder.add(objectBuilder.build());
+		var existingItems = config.getConfigurationItems();
+		for (var existingItemKey : existingItems.keySet()) {
+			var existingItemValue = existingItems.get(existingItemKey);
+			if (existingItemValue == null) continue;
+			var mapValue = map.get(existingItemKey);
+			if (mapValue == null) {
+				LOG.warn("Found [" + existingItemKey + "] configuration key in database but no matching item on Commands");
+			} else {
+				mapValue.setValue(existingItemValue);
+			}
 		}
 
 		var json = createObjectBuilder()
 				.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)
 				.add(RESPONSE_MESSAGE, "Found " + map.size() + " ConfigurationItems");
+
+		var arrayBuilder = createArrayBuilder();
+		for (var key : map.keySet()) {
+			var mapValue = map.get(key);
+			arrayBuilder.add(mapValue.toJson());
+		}
 
 		json.add(ConfigurationItem.NAME, arrayBuilder.build());
 

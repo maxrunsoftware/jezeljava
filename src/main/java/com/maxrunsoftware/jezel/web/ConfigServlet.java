@@ -25,6 +25,7 @@ import java.util.TreeMap;
 import org.apache.commons.lang3.StringUtils;
 
 import com.maxrunsoftware.jezel.Util;
+import com.maxrunsoftware.jezel.model.ConfigurationItem;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,27 +41,52 @@ public class ConfigServlet extends ServletBase {
 		var configs = data.getConfigurationItems();
 		sb.append("<form method=\"post\">");
 		int i = 0;
-		for (var name : configs.keySet()) {
-			var value = configs.get(name);
+		for (var configItem : configs) {
 			var prefix = StringUtils.right("0000" + i, 4);
+			var idName = prefix + "n";
+			var idValue = prefix + "v";
 			sb.append("<div>");
-			sb.append(input().withType("text").withId(prefix + "n").withName(prefix + "n").withValue(name));
+
+			sb.append(input().withType("text").withId(idName).withName(idName).isReadonly().withValue(configItem.getName()));
 			sb.append(" : ");
-			sb.append(input().withType("text").withId(prefix + "v").withName(prefix + "v").withValue(value));
+			var valueObj = configItem.getValueOrDefault();
+			var value = valueObj == null ? "" : valueObj.toString();
+
+			if (equalsAny(configItem.getType(), ConfigurationItem.TYPE_STRING, ConfigurationItem.TYPE_FILENAME)) {
+				sb.append(input()
+						.withType("text")
+						.withId(idValue).withName(idValue)
+						.withValue(value));
+
+			} else if (configItem.getType().equalsIgnoreCase(ConfigurationItem.TYPE_TEXT)) {
+				sb.append(textarea()
+						.withId(idValue).withName(idValue)
+						.withRows("2").withCols("50")
+						.withText(value));
+
+			} else if (configItem.getType().equalsIgnoreCase(ConfigurationItem.TYPE_INT)) {
+				sb.append(input()
+						.withType("number")
+						.withId(idValue).withName(idValue)
+						.withMin(configItem.getMinValue() == null ? "0" : configItem.getMinValue().toString())
+						.withMax(configItem.getMaxValue() == null ? ("" + Integer.MAX_VALUE) : configItem.getMaxValue().toString())
+						.withValue(value));
+			} else if (configItem.getType().equalsIgnoreCase(ConfigurationItem.TYPE_BOOL)) {
+				sb.append(input()
+						.withType("checkbox")
+						.withId(idValue).withName(idValue)
+						.withCondChecked(value == null ? false : parseBoolean(value)));
+			} else if (configItem.getType().equalsIgnoreCase(ConfigurationItem.TYPE_OPTION)) {
+				sb.append("<select id=\"" + idValue + "\" name=\"" + idValue + "\">");
+				for (var optionValue : configItem.getOptionValues()) {
+					sb.append("<option value=\"" + optionValue + "\">" + optionValue + "</option>");
+				}
+				sb.append("</select>");
+			}
+
 			sb.append("</div>");
 			sb.append("<br>");
 			i++;
-		}
-
-		for (int j = 0; j < 10; j++) {
-			var prefix = StringUtils.right("0000" + (i + j), 4);
-
-			sb.append("<div>");
-			sb.append(input().withType("text").withId(prefix + "n").withName(prefix + "n"));
-			sb.append(" : ");
-			sb.append(input().withType("text").withId(prefix + "v").withName(prefix + "v"));
-			sb.append("</div>");
-			sb.append("<br>");
 		}
 
 		sb.append(input().withType("submit").withValue("Save"));

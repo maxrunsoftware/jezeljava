@@ -115,6 +115,12 @@ public final class Util {
 		return s;
 	}
 
+	public static final String trimOrNullLower(String s) {
+		s = trimOrNull(s);
+		if (s != null) s = s.toLowerCase();
+		return s;
+	}
+
 	public static final boolean parseBoolean(String s) {
 		s = s.toLowerCase();
 		if (s.equals("true") || s.equals("t") || s.equals("yes") || s.equals("y") || s.equals("1") || s.equals("on")) return true;

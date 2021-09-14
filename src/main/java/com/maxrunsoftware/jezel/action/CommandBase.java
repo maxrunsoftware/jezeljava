@@ -22,6 +22,7 @@ import java.util.Map;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import com.google.common.collect.ImmutableList;
+import com.maxrunsoftware.jezel.model.ConfigurationItem;
 
 public abstract class CommandBase implements Command {
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(CommandBase.class);
@@ -47,13 +48,13 @@ public abstract class CommandBase implements Command {
 	}
 
 	@Override
-	public List<ParameterDetail> getParameterDetails() {
-		var list = new ArrayList<ParameterDetail>();
+	public List<ConfigurationItem> getParameterDetails() {
+		var list = new ArrayList<ConfigurationItem>();
 		addParameterDetails(list);
 		return ImmutableList.copyOf(list);
 	}
 
-	protected abstract void addParameterDetails(List<ParameterDetail> l);
+	protected abstract void addParameterDetails(List<ConfigurationItem> l);
 
 	protected String getParameter(String name) {
 		return parameters.get(name);

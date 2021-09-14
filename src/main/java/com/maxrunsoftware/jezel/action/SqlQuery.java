@@ -15,12 +15,13 @@
  */
 package com.maxrunsoftware.jezel.action;
 
-import static com.maxrunsoftware.jezel.action.ParameterDetail.*;
+import static com.maxrunsoftware.jezel.model.ConfigurationItem.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.List;
 
+import com.maxrunsoftware.jezel.model.ConfigurationItem;
 import com.maxrunsoftware.jezel.util.Table;
 
 public class SqlQuery extends CommandBase {
@@ -42,7 +43,7 @@ public class SqlQuery extends CommandBase {
 	}
 
 	@Override
-	protected void addParameterDetails(List<ParameterDetail> l) {
+	protected void addParameterDetails(List<ConfigurationItem> l) {
 		l.add(createString("ConnectionString", "The JDBC connection string"));
 		l.add(createText("SQL", "The SQL Statement(s) to execute"));
 	}
