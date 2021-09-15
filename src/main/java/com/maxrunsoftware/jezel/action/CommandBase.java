@@ -33,13 +33,18 @@ public abstract class CommandBase implements Command {
 	@Override
 	public void setParameters(Map<String, String> parameters) {
 		this.parameters.clear();
+		var sb = new StringBuilder();
+		sb.append("Setting parameters on Command to {");
+
 		for (var key : parameters.keySet()) {
 			var val = parameters.get(key);
 			if (val != null) {
-				LOG.debug(key + ": " + val);
+				sb.append("  " + key + ": " + val);
 				this.parameters.put(key, val);
 			}
 		}
+		sb.append("}");
+		log.debug(sb);
 	}
 
 	@Override
