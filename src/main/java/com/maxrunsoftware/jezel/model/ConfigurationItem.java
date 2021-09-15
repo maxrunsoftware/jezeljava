@@ -169,9 +169,9 @@ public class ConfigurationItem implements JsonCodable {
 		json.add("value", coalesce(getValue(), ""));
 		json.add("description", coalesce(getDescription(), ""));
 		json.add("type", coalesce(getType(), ""));
-		json.add("minValue", getMinValue());
-		json.add("maxValue", getMaxValue());
-		json.add("defaultValue", getDefaultValue());
+		json.add("minValue", getMinValue() == null ? "" : getMinValue().toString());
+		json.add("maxValue", getMaxValue() == null ? "" : getMaxValue().toString());
+		json.add("defaultValue", coalesce(getDefaultValue(), ""));
 
 		var ab = createArrayBuilder();
 		for (var optionValue : getOptionValues()) {
@@ -189,8 +189,12 @@ public class ConfigurationItem implements JsonCodable {
 		this.setValue(o.getString("value"));
 		this.setDescription(o.getString("description"));
 		this.setType(o.getString("type"));
-		this.setMinValue(o.getInt("minValue"));
-		this.setMaxValue(o.getInt("maxValue"));
+		var minV = trimOrNull(o.getString("minValue"));
+		setMinValue(minV == null ? null : parseInt(minV));
+
+		var maxV = trimOrNull(o.getString("maxValue"));
+		this.setMaxValue(maxV == null ? null : parseInt(maxV));
+
 		this.setDefaultValue(o.getString("defaultValue"));
 
 		var ar = o.getJsonArray("optionValues");

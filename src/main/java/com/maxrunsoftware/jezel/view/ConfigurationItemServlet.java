@@ -43,6 +43,7 @@ public class ConfigurationItemServlet extends ServletBase {
 					var key = commandClass.getSimpleName().toLowerCase();
 					key += ".";
 					key += configItem.getName();
+					configItem.setName(key);
 					map.put(key, configItem);
 				}
 			} catch (Exception e) {

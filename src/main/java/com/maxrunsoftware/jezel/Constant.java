@@ -168,4 +168,6 @@ public class Constant {
 	public static final String CONTENTTYPE_BINARY = "application/octet-stream";
 	public static final String CONTENTTYPE_HTML = "text/html; charset=UTF-8";
 	public static final String ENCODING_UTF8 = "UTF-8";
+
+	public static final String STYLE_FONT_MONO = "font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;";
 }

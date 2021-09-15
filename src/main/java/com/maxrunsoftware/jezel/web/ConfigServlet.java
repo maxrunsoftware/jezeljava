@@ -24,6 +24,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.Util;
 import com.maxrunsoftware.jezel.model.ConfigurationItem;
 
@@ -47,8 +48,15 @@ public class ConfigServlet extends ServletBase {
 			var idValue = prefix + "v";
 			sb.append("<div>");
 
-			sb.append(input().withType("text").withId(idName).withName(idName).isReadonly().withValue(configItem.getName()));
-			sb.append(" : ");
+			sb.append(input()
+					.withType("text")
+					.withId(idName).withName(idName)
+					.isReadonly()
+					.withSize("50")
+					.withStyle(Constant.STYLE_FONT_MONO)
+					.withValue(configItem.getName()));
+
+			sb.append(" &#8594; ");
 			var valueObj = configItem.getValueOrDefault();
 			var value = valueObj == null ? "" : valueObj.toString();
 
@@ -56,18 +64,21 @@ public class ConfigServlet extends ServletBase {
 				sb.append(input()
 						.withType("text")
 						.withId(idValue).withName(idValue)
+						.withStyle(Constant.STYLE_FONT_MONO)
 						.withValue(value));
 
 			} else if (configItem.getType().equalsIgnoreCase(ConfigurationItem.TYPE_TEXT)) {
 				sb.append(textarea()
 						.withId(idValue).withName(idValue)
 						.withRows("2").withCols("50")
+						.withStyle(Constant.STYLE_FONT_MONO)
 						.withText(value));
 
 			} else if (configItem.getType().equalsIgnoreCase(ConfigurationItem.TYPE_INT)) {
 				sb.append(input()
 						.withType("number")
 						.withId(idValue).withName(idValue)
+						.withStyle(Constant.STYLE_FONT_MONO)
 						.withMin(configItem.getMinValue() == null ? "0" : configItem.getMinValue().toString())
 						.withMax(configItem.getMaxValue() == null ? ("" + Integer.MAX_VALUE) : configItem.getMaxValue().toString())
 						.withValue(value));
