@@ -18,17 +18,12 @@ package com.maxrunsoftware.jezel;
 import static com.google.common.base.Preconditions.*;
 import static com.maxrunsoftware.jezel.Util.*;
 
-import java.time.LocalDateTime;
-
 import javax.inject.Inject;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Singleton;
-import com.maxrunsoftware.jezel.model.SchedulerAction;
-import com.maxrunsoftware.jezel.model.SchedulerActionParameter;
-import com.maxrunsoftware.jezel.model.SchedulerJob;
-import com.maxrunsoftware.jezel.model.SchedulerSchedule;
+import com.maxrunsoftware.jezel.action.CommandParameter;
 import com.maxrunsoftware.jezel.service.SettingServiceEnvironment;
 import com.maxrunsoftware.jezel.web.DataService;
 import com.maxrunsoftware.jezel.web.RestClient;
@@ -40,14 +35,12 @@ public class App {
 	private final WebService webServer;
 	private final SettingService settings;
 	private final SchedulerService scheduler;
-	private final ConfigurationService config;
 
 	@Inject
-	public App(WebService webServer, SettingService settings, SchedulerService scheduler, ConfigurationService config) {
+	public App(WebService webServer, SettingService settings, SchedulerService scheduler) {
 		this.webServer = checkNotNull(webServer);
 		this.settings = checkNotNull(settings);
 		this.scheduler = checkNotNull(scheduler);
-		this.config = checkNotNull(config);
 
 		var map = settings.toMap();
 		for (var key : map.keySet()) {
@@ -103,7 +96,9 @@ public class App {
 
 	private void run(String[] args) {
 		try {
-			populate();
+			CommandParameter.initializeConfigurationItems();
+			RandomData.populateDb();
+
 			var webjoinThread = settings.getRestJoinThread();
 
 			scheduler.start(webjoinThread);
@@ -124,58 +119,6 @@ public class App {
 			LOG.error("Error in REST server", e);
 		}
 
-	}
-
-	private void populate() {
-		var db = Constant.getInstance(DatabaseService.class);
-		try (var session = db.openSession()) {
-
-			for (int i = 0; i < randomInt(8, 10); i++) {
-				var j = new SchedulerJob();
-				j.setName(randomPick(Constant.NOUNS));
-				j.setGroup(randomPick("group1", "group2", "group3"));
-				j.setDisabled(randomBoolean());
-				j = getById(SchedulerJob.class, session, save(session, j));
-
-				for (int ii = 0; ii < randomInt(3, 5); ii++) {
-					var s = new SchedulerSchedule();
-					s.setDays(true, randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean(), randomBoolean());
-					s.setTime(randomInt(0, 23), randomInt(0, 59));
-					s.setDisabled(randomBoolean());
-					s.setSchedulerJob(j);
-					save(session, s);
-				}
-				for (int ii = 0; ii < 3; ii++) {
-					var s = new SchedulerSchedule();
-					s.setDays(true, true, true, true, true, true, true);
-					s.setTime(LocalDateTime.now().getHour(), LocalDateTime.now().getMinute() + ii);
-					s.setDisabled(false);
-					s.setSchedulerJob(j);
-					save(session, s);
-				}
-
-				for (int ii = 0; ii < randomInt(3, 5); ii++) {
-					var a = new SchedulerAction();
-					a.setName("SqlQuery");
-					a.setDescription(randomPick(Constant.NOUNS));
-					a.setDisabled(randomBoolean());
-					a.setSchedulerJob(j);
-					a.setIndex(ii);
-					a = getById(SchedulerAction.class, session, save(session, a));
-
-					for (int iii = 0; iii < randomInt(5, 8); iii++) {
-						var ap = new SchedulerActionParameter();
-						ap.setName(randomPick(Constant.NOUNS));
-						ap.setValue(randomPick(Constant.NOUNS));
-						ap.setSchedulerAction(a);
-						save(session, a);
-					}
-
-				}
-
-			}
-
-		}
 	}
 
 }

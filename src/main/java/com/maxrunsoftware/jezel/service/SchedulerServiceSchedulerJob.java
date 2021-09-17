@@ -20,6 +20,7 @@ import static com.maxrunsoftware.jezel.Util.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -28,13 +29,12 @@ import javax.inject.Inject;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.maxrunsoftware.jezel.ConfigurationService;
 import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.DatabaseService;
-import com.maxrunsoftware.jezel.Util;
 import com.maxrunsoftware.jezel.action.Command;
 import com.maxrunsoftware.jezel.model.CommandLogAction;
 import com.maxrunsoftware.jezel.model.CommandLogJob;
+import com.maxrunsoftware.jezel.model.ConfigurationItem;
 import com.maxrunsoftware.jezel.model.SchedulerAction;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
 
@@ -45,15 +45,17 @@ public class SchedulerServiceSchedulerJob {
 		private final String schedulerActionName;
 		private final Map<String, String> parameters;
 
-		public ActionItem(SchedulerAction schedulerAction, ConfigurationService config) {
+		public ActionItem(SchedulerAction schedulerAction, DatabaseService db) {
 			this.schedulerActionId = schedulerAction.getSchedulerActionId();
 			this.schedulerActionName = schedulerAction.getName();
 
-			parameters = Util.mapCaseInsensitive();
+			parameters = new HashMap<String, String>();
 
-			var parametersDefault = config.getConfigurationItemsPrefixed(schedulerActionName);
-			for (var key : parametersDefault.keySet()) {
-				parameters.put(key, parametersDefault.get(key));
+			try (var session = db.openSession()) {
+				var parametersDefault = ConfigurationItem.getWithPrefix(session, schedulerActionName);
+				for (var key : parametersDefault.keySet()) {
+					parameters.put(key, parametersDefault.get(key));
+				}
 			}
 
 			for (var schedulerActionParameter : schedulerAction.getSchedulerActionParameters()) {
@@ -80,12 +82,10 @@ public class SchedulerServiceSchedulerJob {
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(SchedulerServiceSchedulerJob.class);
 
 	private final DatabaseService db;
-	private final ConfigurationService config;
 
 	@Inject
-	public SchedulerServiceSchedulerJob(DatabaseService db, ConfigurationService config) {
+	public SchedulerServiceSchedulerJob(DatabaseService db) {
 		this.db = checkNotNull(db);
-		this.config = checkNotNull(config);
 	}
 
 	private boolean execute(ActionItem action, int actionIndex, int commandLogJobId) {
@@ -162,7 +162,7 @@ public class SchedulerServiceSchedulerJob {
 				commandLogJobId = save(session, commandLogJob);
 
 				for (var schedulerAction : schedulerJob.getSchedulerActions()) {
-					actions.add(new ActionItem(schedulerAction, config));
+					actions.add(new ActionItem(schedulerAction, db));
 				}
 			}
 

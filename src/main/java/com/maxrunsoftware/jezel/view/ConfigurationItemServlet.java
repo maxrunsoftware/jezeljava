@@ -19,9 +19,9 @@ import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.TreeMap;
+import java.util.Map;
 
-import com.maxrunsoftware.jezel.Constant;
+import com.maxrunsoftware.jezel.action.CommandParameter;
 import com.maxrunsoftware.jezel.model.ConfigurationItem;
 
 import jakarta.servlet.ServletException;
@@ -35,67 +35,44 @@ public class ConfigurationItemServlet extends ServletBase {
 	@Override
 	protected void doGetAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-		var map = new TreeMap<String, ConfigurationItem>();
-		for (var commandClass : Constant.COMMANDS) {
-			try {
-				var commandClassInstance = commandClass.getDeclaredConstructor().newInstance();
-				for (var configItem : commandClassInstance.getParameterDetails()) {
-					var key = commandClass.getSimpleName().toLowerCase();
-					key += ".";
-					key += configItem.getName();
-					configItem.setName(key);
-					map.put(key, configItem);
-				}
-			} catch (Exception e) {
-				throw new Error(e);
-			}
+		Map<String, String> map;
+		try (var session = db.openSession()) {
+			map = ConfigurationItem.get(session);
 		}
-
-		var existingItems = config.getConfigurationItems();
-		for (var existingItemKey : existingItems.keySet()) {
-			var existingItemValue = existingItems.get(existingItemKey);
-			if (existingItemValue == null) continue;
-			var mapValue = map.get(existingItemKey);
-			if (mapValue == null) {
-				LOG.warn("Found [" + existingItemKey + "] configuration key in database but no matching item on Commands");
-			} else {
-				mapValue.setValue(existingItemValue);
-			}
-		}
-
-		var json = createObjectBuilder()
-				.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)
-				.add(RESPONSE_MESSAGE, "Found " + map.size() + " ConfigurationItems");
 
 		var arrayBuilder = createArrayBuilder();
 		for (var key : map.keySet()) {
 			var mapValue = map.get(key);
-			arrayBuilder.add(mapValue.toJson());
+			var o = createObjectBuilder();
+			o.add("name", key);
+			o.add("value", coalesce(mapValue, ""));
+			var cp = CommandParameter.get(key);
+			if (cp != null) { o.add(CommandParameter.NAME, cp.toJson()); }
+			arrayBuilder.add(o);
 		}
 
-		json.add(ConfigurationItem.NAME, arrayBuilder.build());
+		var json = createObjectBuilder()
+				.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)
+				.add(RESPONSE_MESSAGE, "Found " + map.size() + " " + ConfigurationItem.class.getSimpleName() + "s")
+				.add(ConfigurationItem.NAME, arrayBuilder.build());
 
 		writeResponse(response, json);
 	}
 
 	@Override
 	protected void doPostAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		for (var pName : Collections.list(request.getParameterNames())) {
-			var pValue = trimOrNull(request.getParameter(pName));
-			pName = trimOrNull(pName);
-			if (pName == null) continue;
-			pName = pName.toLowerCase();
+		try (var session = db.openSession()) {
 
-			config.setConfigurationItem(pName, pValue);
+			for (var pName : Collections.list(request.getParameterNames())) {
+				var pValue = trimOrNull(request.getParameter(pName));
+				pName = trimOrNull(pName);
+				if (pName == null) continue;
+				ConfigurationItem.setExisting(session, pName, pValue);
+
+			}
 		}
 
-		writeResponse(response, RESPONSE_STATUS_SUCCESS, "ConfigurationItem successfully saved", 200);
-	}
-
-	@Override
-	protected void doDeleteAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		config.clearConfigurationItems();
-		writeResponse(response, RESPONSE_STATUS_SUCCESS, "ConfigurationItems successfully deleted", 200);
+		writeResponse(response, RESPONSE_STATUS_SUCCESS, ConfigurationItem.class.getSimpleName() + " successfully saved", 200);
 	}
 
 }

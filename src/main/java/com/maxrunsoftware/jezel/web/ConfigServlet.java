@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.Util;
-import com.maxrunsoftware.jezel.model.ConfigurationItem;
+import com.maxrunsoftware.jezel.action.CommandParameter;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,42 +54,43 @@ public class ConfigServlet extends ServletBase {
 					.isReadonly()
 					.withSize("50")
 					.withStyle(Constant.STYLE_FONT_MONO)
-					.withValue(configItem.getName()));
+					.withValue(configItem.name()));
 
 			sb.append(" &#8594; ");
-			var valueObj = configItem.getValueOrDefault();
+			var valueObj = configItem.value();
 			var value = valueObj == null ? "" : valueObj.toString();
 
-			if (equalsAny(configItem.getType(), ConfigurationItem.TYPE_STRING, ConfigurationItem.TYPE_FILENAME)) {
+			var param = configItem.parameter();
+			if (param == null || equalsAny(param.getType(), CommandParameter.TYPE_STRING, CommandParameter.TYPE_FILENAME)) {
 				sb.append(input()
 						.withType("text")
 						.withId(idValue).withName(idValue)
 						.withStyle(Constant.STYLE_FONT_MONO)
 						.withValue(value));
 
-			} else if (configItem.getType().equalsIgnoreCase(ConfigurationItem.TYPE_TEXT)) {
+			} else if (param.getType().equalsIgnoreCase(CommandParameter.TYPE_TEXT)) {
 				sb.append(textarea()
 						.withId(idValue).withName(idValue)
 						.withRows("2").withCols("50")
 						.withStyle(Constant.STYLE_FONT_MONO)
 						.withText(value));
 
-			} else if (configItem.getType().equalsIgnoreCase(ConfigurationItem.TYPE_INT)) {
+			} else if (param.getType().equalsIgnoreCase(CommandParameter.TYPE_INT)) {
 				sb.append(input()
 						.withType("number")
 						.withId(idValue).withName(idValue)
 						.withStyle(Constant.STYLE_FONT_MONO)
-						.withMin(configItem.getMinValue() == null ? "0" : configItem.getMinValue().toString())
-						.withMax(configItem.getMaxValue() == null ? ("" + Integer.MAX_VALUE) : configItem.getMaxValue().toString())
+						.withMin(param.getMinValue() == null ? "0" : param.getMinValue().toString())
+						.withMax(param.getMaxValue() == null ? ("" + Integer.MAX_VALUE) : param.getMaxValue().toString())
 						.withValue(value));
-			} else if (configItem.getType().equalsIgnoreCase(ConfigurationItem.TYPE_BOOL)) {
+			} else if (param.getType().equalsIgnoreCase(CommandParameter.TYPE_BOOL)) {
 				sb.append(input()
 						.withType("checkbox")
 						.withId(idValue).withName(idValue)
 						.withCondChecked(value == null ? false : parseBoolean(value)));
-			} else if (configItem.getType().equalsIgnoreCase(ConfigurationItem.TYPE_OPTION)) {
+			} else if (param.getType().equalsIgnoreCase(CommandParameter.TYPE_OPTION)) {
 				sb.append("<select id=\"" + idValue + "\" name=\"" + idValue + "\">");
-				for (var optionValue : configItem.getOptionValues()) {
+				for (var optionValue : param.getOptionValues()) {
 					sb.append("<option value=\"" + optionValue + "\">" + optionValue + "</option>");
 				}
 				sb.append("</select>");

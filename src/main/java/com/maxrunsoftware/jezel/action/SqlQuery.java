@@ -15,23 +15,23 @@
  */
 package com.maxrunsoftware.jezel.action;
 
-import static com.maxrunsoftware.jezel.model.ConfigurationItem.*;
+import static com.maxrunsoftware.jezel.action.CommandParameter.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.List;
 
-import com.maxrunsoftware.jezel.model.ConfigurationItem;
 import com.maxrunsoftware.jezel.util.Table;
 
 public class SqlQuery extends CommandBase {
 
 	@Override
 	public void execute() throws Exception {
-		var connectionString = getParameter("ConnectionString");
-		var sql = getParameter("SQL");
+		var connectionString = getParameterRequired("ConnectionString");
+		var sql = getParameterRequired("SQL");
 
-		connectionString = "jdbc:sqlserver://yourserver.database.windows.net:1433;database=AdventureWorks;user=yourusername@yourserver;password=yourpassword;loginTimeout=30;";
+		// connectionString =
+		// "jdbc:sqlserver://yourserver.database.windows.net:1433;database=AdventureWorks;user=yourusername@yourserver;password=yourpassword;loginTimeout=30;";
 
 		try (Connection connection = DriverManager.getConnection(connectionString)) {
 			var statement = connection.prepareStatement(sql);
@@ -43,9 +43,13 @@ public class SqlQuery extends CommandBase {
 	}
 
 	@Override
-	protected void addParameterDetails(List<ConfigurationItem> l) {
+	protected void addParameterDetails(List<CommandParameter> l) {
 		l.add(createString("ConnectionString", "The JDBC connection string"));
 		l.add(createText("SQL", "The SQL Statement(s) to execute"));
+		for (int i = 1; i <= 20; i++) {
+			l.add(createFilename("OutputFile" + i, "The tab-delimited output " + i + " file"));
+		}
+
 	}
 
 }

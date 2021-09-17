@@ -28,7 +28,6 @@ import com.maxrunsoftware.jezel.model.SchedulerAction;
 import com.maxrunsoftware.jezel.model.SchedulerActionParameter;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
 import com.maxrunsoftware.jezel.model.SchedulerSchedule;
-import com.maxrunsoftware.jezel.service.ConfigurationServiceDatabase;
 import com.maxrunsoftware.jezel.service.DatabaseServiceH2;
 import com.maxrunsoftware.jezel.service.SchedulerServiceQuartz;
 import com.maxrunsoftware.jezel.service.SettingServiceEnvironment;
@@ -104,8 +103,7 @@ public class Constant {
 			new InjectorBind(WebService.class, WebServiceJetty.class, true),
 			new InjectorBind(DatabaseService.class, DatabaseServiceH2.class, true),
 			new InjectorBind(SchedulerService.class, SchedulerServiceQuartz.class, true),
-			new InjectorBind(BearerService.class, WebServiceJettyBearerMemory.class, true),
-			new InjectorBind(ConfigurationService.class, ConfigurationServiceDatabase.class, true)
+			new InjectorBind(BearerService.class, WebServiceJettyBearerMemory.class, true)
 
 	);
 

@@ -21,9 +21,6 @@ import java.util.Map;
 
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
-import com.google.common.collect.ImmutableList;
-import com.maxrunsoftware.jezel.model.ConfigurationItem;
-
 public abstract class CommandBase implements Command {
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(CommandBase.class);
 
@@ -44,7 +41,7 @@ public abstract class CommandBase implements Command {
 			}
 		}
 		sb.append("}");
-		log.debug(sb);
+		LOG.debug(sb.toString());
 	}
 
 	@Override
@@ -53,16 +50,25 @@ public abstract class CommandBase implements Command {
 	}
 
 	@Override
-	public List<ConfigurationItem> getParameterDetails() {
-		var list = new ArrayList<ConfigurationItem>();
+	public List<CommandParameter> getParameterDetails() {
+		var list = new ArrayList<CommandParameter>();
 		addParameterDetails(list);
-		return ImmutableList.copyOf(list);
+		for (var item : list) {
+			item.setClazz(getClass().getSimpleName());
+		}
+		return list;
 	}
 
-	protected abstract void addParameterDetails(List<ConfigurationItem> l);
+	protected abstract void addParameterDetails(List<CommandParameter> l);
 
 	protected String getParameter(String name) {
 		return parameters.get(name);
+	}
+
+	protected String getParameterRequired(String name) {
+		var p = getParameter(name);
+		if (p == null) throw new IllegalArgumentException("Parameter [" + name + "] is not defined");
+		return p;
 	}
 
 }

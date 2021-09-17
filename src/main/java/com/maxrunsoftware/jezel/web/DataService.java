@@ -16,6 +16,7 @@
 package com.maxrunsoftware.jezel.web;
 
 import static com.google.common.base.Preconditions.*;
+import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.google.common.collect.Lists;
+import com.maxrunsoftware.jezel.action.CommandParameter;
 import com.maxrunsoftware.jezel.model.CommandLogJob;
 import com.maxrunsoftware.jezel.model.ConfigurationItem;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
@@ -207,8 +209,10 @@ public class DataService {
 		return list;
 	}
 
-	public List<ConfigurationItem> getConfigurationItems() throws IOException {
-		var map = new TreeMap<String, ConfigurationItem>();
+	public static record ConfigItemCommandParameter(String name, String value, CommandParameter parameter) {}
+
+	public List<ConfigItemCommandParameter> getConfigurationItems() throws IOException {
+		var map = new TreeMap<String, ConfigItemCommandParameter>();
 
 		var response = client.get(Verb.GET,
 				"config");
@@ -217,24 +221,28 @@ public class DataService {
 		var array = o.getJsonArray(ConfigurationItem.NAME);
 		for (var val : array) {
 			var oo = val.asJsonObject();
-			var ci = new ConfigurationItem();
-			ci.fromJson(oo);
-			map.put(ci.getName(), ci);
+			var name = trimOrNull(oo.getString("name"));
+			var value = trimOrNull(oo.getString("value"));
+			CommandParameter cp = null;
+			var cpJson = oo.getJsonObject(CommandParameter.NAME);
+			if (cpJson != null) {
+				cp = new CommandParameter();
+				cp.fromJson(cpJson);
+			}
+			var r = new ConfigItemCommandParameter(name, value, cp);
+			map.put(name, r);
 		}
 
-		return new ArrayList<ConfigurationItem>(map.values());
+		return new ArrayList<ConfigItemCommandParameter>(map.values());
 	}
 
 	private static record ConfigItem(String name, String value) {}
 
 	public void saveConfigurationItems(Map<String, String> map) throws IOException {
 
-		LOG.debug("Issuing DELETE for existing configuration");
-		client.get(Verb.DELETE, "config");
-
 		var list = new ArrayList<ConfigItem>();
 		for (var name : map.keySet()) {
-			list.add(new ConfigItem(name, map.get(name)));
+			list.add(new ConfigItem(name, coalesce(map.get(name), "")));
 		}
 
 		var listParts = Lists.partition(list, 10);
