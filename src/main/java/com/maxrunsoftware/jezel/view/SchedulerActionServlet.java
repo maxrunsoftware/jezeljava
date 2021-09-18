@@ -19,7 +19,6 @@ import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
 
-import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.model.SchedulerAction;
 import com.maxrunsoftware.jezel.model.SchedulerJob;
 
@@ -48,8 +47,8 @@ public class SchedulerActionServlet extends ServletBase {
 			}
 
 			var actionNamesArray = createArrayBuilder();
-			for (var clazz : Constant.COMMANDS) {
-				actionNamesArray.add(clazz.getSimpleName());
+			for (var name : SchedulerAction.getSchedulerActionNames()) {
+				actionNamesArray.add(name);
 			}
 
 			var json = createObjectBuilder()
@@ -77,14 +76,17 @@ public class SchedulerActionServlet extends ServletBase {
 				return;
 			}
 
-			var schedulerAction = new SchedulerAction();
-			schedulerAction.setDisabled(false);
-			schedulerAction.setSchedulerJob(schedulerJob);
-			schedulerAction.setIndex(Integer.MAX_VALUE);
-			var schedulerActionId = save(session, schedulerAction);
+			var name = trimOrNull(getParameter(request, "name"));
+			if (name == null) {
+				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerAction [name] was not provided to create SchedulerAction", 400);
+				return;
+			}
+			if (!SchedulerAction.isValidSchedulerActionName(name)) {
+				writeResponse(response, RESPONSE_STATUS_FAILED, "No Command name '" + name + "' exists to create SchedulerAction", 400);
+				return;
+			}
 
-			schedulerJob = getById(SchedulerJob.class, session, schedulerJobId);
-			schedulerJob.reindexSchedulerActions(session);
+			var schedulerActionId = SchedulerAction.create(session, schedulerJob, name);
 
 			var json = createObjectBuilder()
 					.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)
@@ -110,24 +112,42 @@ public class SchedulerActionServlet extends ServletBase {
 				return;
 			}
 
-			var name = trimOrNull(request.getParameter("name"));
+			var name = trimOrNull(getParameter(request, "name"));
+			if (!SchedulerAction.isValidSchedulerActionName(name)) {
+				writeResponse(response, RESPONSE_STATUS_FAILED, "No Command '" + name + "' exists to update SchedulerAction", 400);
+				return;
+			}
 			if (name != null) {
 				LOG.debug("Updating SchedulerAction[" + schedulerActionId + "] [name] from " + schedulerAction.getName() + " to " + name);
 				schedulerAction.setName(name);
 			}
+
 			var description = trimOrNull(request.getParameter("description"));
 			if (description != null) {
 				LOG.debug("Updating SchedulerAction[" + schedulerActionId + "] [description] from " + schedulerAction.getDescription() + " to " + description);
 				schedulerAction.setDescription(description);
 			}
+
 			var disabled = trimOrNull(request.getParameter("disabled"));
 			if (disabled != null) {
 				LOG.debug("Updating SchedulerAction[" + schedulerActionId + "] [disabled] from " + schedulerAction.isDisabled() + " to " + disabled);
 				schedulerAction.setDisabled(parseBoolean(disabled));
 			}
 
-			if (name != null || description != null || disabled != null) {
+			var index = trimOrNull(request.getParameter("index"));
+			if (index != null) {
+				LOG.debug("Updating SchedulerAction[" + schedulerActionId + "] [index] from " + schedulerAction.getIndex() + " to " + index);
+				schedulerAction.setIndex(parseInt(index));
+			}
+
+			if (name != null || description != null || disabled != null || index != null) {
 				save(session, schedulerAction);
+
+				if (index != null) {
+					var schedulerJob = getById(SchedulerJob.class, session, schedulerAction.getSchedulerJob().getSchedulerJobId());
+					schedulerJob.reindexSchedulerActions(session);
+				}
+
 				writeResponse(response, RESPONSE_STATUS_SUCCESS, "SchedulerAction[" + schedulerActionId + "] successfully updated", 200);
 			} else {
 				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerAction[" + schedulerActionId + "] nothing provided to update", 400);

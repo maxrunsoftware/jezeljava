@@ -24,6 +24,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 
 import com.maxrunsoftware.jezel.JsonCodable;
@@ -68,7 +69,8 @@ public class SchedulerActionParameter implements JsonCodable {
 		this.name = trimOrNull(name);
 	}
 
-	@Column(length = 1000, nullable = false, unique = false)
+	@Lob
+	@Column(nullable = true, unique = false)
 	private String value;
 
 	public String getValue() {

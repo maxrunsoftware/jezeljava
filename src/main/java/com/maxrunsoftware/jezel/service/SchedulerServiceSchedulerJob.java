@@ -52,7 +52,7 @@ public class SchedulerServiceSchedulerJob {
 			parameters = new HashMap<String, String>();
 
 			try (var session = db.openSession()) {
-				var parametersDefault = ConfigurationItem.getWithPrefix(session, schedulerActionName);
+				var parametersDefault = ConfigurationItem.getValuesWithPrefix(session, schedulerActionName);
 				for (var key : parametersDefault.keySet()) {
 					parameters.put(key, parametersDefault.get(key));
 				}

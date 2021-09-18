@@ -245,11 +245,30 @@ public class CommandParameter implements JsonCodable {
 		return list;
 	}
 
+	public static List<CommandParameter> getForCommand(String commandName) {
+		var list = new ArrayList<CommandParameter>();
+		commandName = trimOrNull(commandName);
+		if (commandName == null) return list;
+		for (var cp : getAll()) {
+			if (cp.getClazz().equalsIgnoreCase(commandName)) { list.add(cp); }
+		}
+
+		return list;
+	}
+
 	public static CommandParameter get(String nameFull) {
 		for (var cp : getAll()) {
 			if (cp.getNameFull().equalsIgnoreCase(nameFull)) return cp;
 		}
 		return null;
+	}
+
+	public static List<CommandParameter> getWithPrefix(String prefix) {
+		var list = new ArrayList<CommandParameter>();
+		for (var cp : getAll()) {
+			if (cp.getClazz().equalsIgnoreCase(prefix)) list.add(cp);
+		}
+		return list;
 	}
 
 	public static void initializeConfigurationItems(Session session) {
@@ -261,7 +280,7 @@ public class CommandParameter implements JsonCodable {
 		}
 
 		var ciHash = new HashSet<String>();
-		for (var ci : ConfigurationItem.get(session).keySet()) {
+		for (var ci : ConfigurationItem.getValues(session).keySet()) {
 			ciHash.add(ci);
 		}
 
@@ -270,7 +289,7 @@ public class CommandParameter implements JsonCodable {
 				var cp = cpsHash.get(cpName);
 				var value = cp.getDefaultValue();
 				LOG.debug("Adding ConfigurationItem [" + cpName + "]: " + value);
-				ConfigurationItem.set(session, cpName, cp.getDefaultValue());
+				ConfigurationItem.setValue(session, cpName, cp.getDefaultValue());
 
 			}
 		}

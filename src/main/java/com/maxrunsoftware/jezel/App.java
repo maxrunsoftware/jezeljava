@@ -24,6 +24,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Singleton;
 import com.maxrunsoftware.jezel.action.CommandParameter;
+import com.maxrunsoftware.jezel.model.SchedulerAction;
 import com.maxrunsoftware.jezel.service.SettingServiceEnvironment;
 import com.maxrunsoftware.jezel.web.DataService;
 import com.maxrunsoftware.jezel.web.RestClient;
@@ -97,6 +98,7 @@ public class App {
 	private void run(String[] args) {
 		try {
 			CommandParameter.initializeConfigurationItems();
+			SchedulerAction.syncAllParametersToCommand();
 			RandomData.populateDb();
 
 			var webjoinThread = settings.getRestJoinThread();

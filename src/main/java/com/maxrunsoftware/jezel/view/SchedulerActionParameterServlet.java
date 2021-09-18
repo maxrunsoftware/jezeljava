@@ -18,8 +18,10 @@ package com.maxrunsoftware.jezel.view;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Map;
 
+import com.maxrunsoftware.jezel.action.CommandParameter;
+import com.maxrunsoftware.jezel.model.ConfigurationItem;
 import com.maxrunsoftware.jezel.model.SchedulerAction;
 import com.maxrunsoftware.jezel.model.SchedulerActionParameter;
 
@@ -33,15 +35,39 @@ public class SchedulerActionParameterServlet extends ServletBase {
 
 	@Override
 	protected void doGetAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerActionParameterId = getParameterInt(request, SchedulerAction.ID);
-		try (var session = db.openSession()) {
+		var schedulerActionId = getParameterInt(request, SchedulerAction.ID);
+		if (schedulerActionId == null) {
+			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerAction.ID + "' parameter provided to update SchedulerActionParameters", 400);
+			return;
+		}
 
-			var schedulerActionParameters = new ArrayList<SchedulerActionParameter>();
-			if (schedulerActionParameterId == null) {
-				schedulerActionParameters.addAll(getAll(SchedulerActionParameter.class, session));
-			} else {
-				schedulerActionParameters.add(getById(SchedulerActionParameter.class, session, schedulerActionParameterId));
+		try (var session = db.openSession()) {
+			var schedulerAction = getById(SchedulerAction.class, session, schedulerActionId);
+			if (schedulerAction == null) {
+				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerAction[" + schedulerActionId + "] does not exist", 404);
+				return;
 			}
+
+			Map<String, String> map;
+			map = ConfigurationItem.getValues(session);
+
+			var arrayBuilder = createArrayBuilder();
+			for (var key : map.keySet()) {
+				var mapValue = map.get(key);
+				var o = createObjectBuilder();
+				o.add("name", key);
+				o.add("value", coalesce(mapValue, ""));
+				var cp = CommandParameter.get(key);
+				if (cp != null) { o.add(CommandParameter.NAME, cp.toJson()); }
+				arrayBuilder.add(o);
+			}
+
+			var json = createObjectBuilder()
+					.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)
+					.add(RESPONSE_MESSAGE, "Found " + map.size() + " " + ConfigurationItem.class.getSimpleName() + "s")
+					.add(ConfigurationItem.NAME, arrayBuilder.build());
+
+			writeResponse(response, json);
 
 			var json = createObjectBuilder()
 					.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)

@@ -35,13 +35,17 @@ import javax.persistence.OneToMany;
 
 import org.hibernate.Session;
 
+import com.maxrunsoftware.jezel.Constant;
+import com.maxrunsoftware.jezel.DatabaseService;
 import com.maxrunsoftware.jezel.JsonCodable;
 import com.maxrunsoftware.jezel.Util;
+import com.maxrunsoftware.jezel.action.CommandParameter;
 
 @Entity
 public class SchedulerAction implements JsonCodable {
 	public static final String NAME = "schedulerAction";
 	public static final String ID = NAME + "Id";
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(SchedulerAction.class);
 
 	public static final Comparator<SchedulerAction> SORT_INDEX = new Comparator<SchedulerAction>() {
 		@Override
@@ -106,7 +110,7 @@ public class SchedulerAction implements JsonCodable {
 		this.commandLogActions = commandLogActions;
 	}
 
-	@Column(length = 200, nullable = true, unique = false)
+	@Column(length = 200, nullable = false, unique = false)
 	private String name;
 
 	public String getName() {
@@ -121,11 +125,11 @@ public class SchedulerAction implements JsonCodable {
 	private String description;
 
 	public String getDescription() {
-		return description;
+		return trimOrNull(description);
 	}
 
 	public void setDescription(String description) {
-		this.description = description;
+		this.description = trimOrNull(description);
 	}
 
 	@Column(nullable = false)
@@ -197,6 +201,103 @@ public class SchedulerAction implements JsonCodable {
 			if (Integer.valueOf(schedulerJobId).equals(o.getSchedulerJob().getSchedulerJobId())) list.add(o);
 		}
 		return list;
+	}
+
+	public static List<String> getSchedulerActionNames() {
+		var list = new ArrayList<String>();
+		for (var clazz : Constant.COMMANDS) {
+			list.add(clazz.getSimpleName());
+		}
+		return list;
+	}
+
+	public static boolean isValidSchedulerActionName(String name) {
+		name = trimOrNull(name);
+		if (name == null) return false;
+		for (var n : getSchedulerActionNames()) {
+			if (name.equalsIgnoreCase(n)) return true;
+		}
+		return false;
+	}
+
+	public SchedulerActionParameter getSchedulerActionParameter(String name) {
+		for (var p : getSchedulerActionParameters()) {
+			if (p.getName().equalsIgnoreCase(name)) return p;
+		}
+		return null;
+	}
+
+	public void syncParametersToCommand(Session session) {
+		var namesPar = new HashSet<String>();
+		var namesCmd = new HashSet<String>();
+
+		var namesToRemove = new HashSet<String>();
+		var namesToAdd = new HashSet<String>();
+
+		for (var par : getSchedulerActionParameters()) {
+			namesPar.add(par.getName());
+		}
+
+		for (var cmd : CommandParameter.getForCommand(getName())) {
+			namesCmd.add(cmd.getName());
+		}
+
+		for (var namePar : namesPar) {
+			if (!namesCmd.contains(namePar)) { namesToRemove.add(namePar); }
+		}
+
+		for (var nameCmd : namesCmd) {
+			if (!namesPar.contains(nameCmd)) { namesToAdd.add(nameCmd); }
+		}
+
+		for (var nameToRemove : namesToRemove) {
+			LOG.debug("Removing parameter [" + nameToRemove + "] from SchedulerAction[" + getSchedulerActionId() + "]");
+			var p = getSchedulerActionParameter(nameToRemove);
+			delete(session, p);
+		}
+
+		for (var nameToAdd : namesToAdd) {
+			LOG.debug("Adding parameter [" + nameToAdd + "] to SchedulerAction[" + getSchedulerActionId() + "]");
+
+			var p = new SchedulerActionParameter();
+			p.setName(nameToAdd);
+			p.setSchedulerAction(this);
+			save(session, p);
+		}
+
+	}
+
+	public static void syncAllParametersToCommand(Session session) {
+		var schedulerActions = getAll(SchedulerAction.class, session);
+		for (var schedulerAction : schedulerActions) {
+			schedulerAction.syncParametersToCommand(session);
+		}
+	}
+
+	public static void syncAllParametersToCommand() {
+		try (var session = Constant.getInstance(DatabaseService.class).openSession()) {
+			syncAllParametersToCommand(session);
+		}
+	}
+
+	public static int create(Session session, SchedulerJob schedulerJob, String name) {
+		// Create
+		var schedulerAction = new SchedulerAction();
+		schedulerAction.setDisabled(false);
+		schedulerAction.setSchedulerJob(schedulerJob);
+		schedulerAction.setIndex(Integer.MAX_VALUE);
+		schedulerAction.setName(name);
+		var schedulerActionId = save(session, schedulerAction);
+
+		// Reindex
+		schedulerJob = getById(SchedulerJob.class, session, schedulerJob.getSchedulerJobId());
+		schedulerJob.reindexSchedulerActions(session);
+
+		// Create Parameters
+		schedulerAction = getById(SchedulerAction.class, session, schedulerActionId);
+		schedulerAction.syncParametersToCommand(session);
+
+		return schedulerActionId;
 	}
 
 }

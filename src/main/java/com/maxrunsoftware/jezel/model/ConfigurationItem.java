@@ -95,7 +95,7 @@ public class ConfigurationItem implements JsonCodable {
 		return getClass().getSimpleName() + "[" + getConfigurationItemId() + "]";
 	}
 
-	public static Map<String, String> get(Session session) {
+	public static Map<String, String> getValues(Session session) {
 		var map = new HashMap<String, String>();
 		for (var item : getAll(ConfigurationItem.class, session)) {
 			map.put(item.getName(), item.getValue());
@@ -103,11 +103,11 @@ public class ConfigurationItem implements JsonCodable {
 		return map;
 	}
 
-	public static Map<String, String> getWithPrefix(Session session, String prefix) {
+	public static Map<String, String> getValuesWithPrefix(Session session, String prefix) {
 		var map = new HashMap<String, String>();
 		prefix = prefix.toLowerCase();
 		if (!prefix.endsWith(".")) prefix += ".";
-		var cis = get(session);
+		var cis = getValues(session);
 		for (var name : cis.keySet()) {
 			var value = cis.get(name);
 			if (name.toLowerCase().startsWith(prefix)) {
@@ -120,7 +120,7 @@ public class ConfigurationItem implements JsonCodable {
 
 	}
 
-	public static void set(Session session, String name, String value) {
+	public static void setValue(Session session, String name, String value) {
 		name = trimOrNull(name);
 		if (name == null) return;
 		value = trimOrNull(value);
@@ -151,7 +151,7 @@ public class ConfigurationItem implements JsonCodable {
 		return null;
 	}
 
-	public static boolean setExisting(Session session, String name, String value) {
+	public static boolean setValueExisting(Session session, String name, String value) {
 		name = trimOrNull(name);
 		if (name == null) return false;
 		value = trimOrNull(value);

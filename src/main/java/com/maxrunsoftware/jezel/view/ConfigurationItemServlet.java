@@ -37,7 +37,7 @@ public class ConfigurationItemServlet extends ServletBase {
 
 		Map<String, String> map;
 		try (var session = db.openSession()) {
-			map = ConfigurationItem.get(session);
+			map = ConfigurationItem.getValues(session);
 		}
 
 		var arrayBuilder = createArrayBuilder();
@@ -67,7 +67,7 @@ public class ConfigurationItemServlet extends ServletBase {
 				var pValue = trimOrNull(request.getParameter(pName));
 				pName = trimOrNull(pName);
 				if (pName == null) continue;
-				ConfigurationItem.setExisting(session, pName, pValue);
+				ConfigurationItem.setValueExisting(session, pName, pValue);
 
 			}
 		}
