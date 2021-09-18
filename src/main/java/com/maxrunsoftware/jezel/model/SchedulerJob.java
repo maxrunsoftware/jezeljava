@@ -17,6 +17,8 @@ package com.maxrunsoftware.jezel.model;
 
 import static com.maxrunsoftware.jezel.Util.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +30,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+
+import org.hibernate.Session;
 
 import com.maxrunsoftware.jezel.JsonCodable;
 
@@ -192,6 +196,17 @@ public class SchedulerJob implements JsonCodable {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[" + getSchedulerJobId() + "]";
+	}
+
+	public void reindexSchedulerActions(Session session) {
+		var list = new ArrayList<SchedulerAction>(getSchedulerActions());
+		Collections.sort(list, SchedulerAction.SORT_INDEX);
+
+		for (int i = 0; i < list.size(); i++) {
+			var schedulerAction = list.get(i);
+			schedulerAction.setIndex(i);
+			save(session, schedulerAction);
+		}
 	}
 
 }

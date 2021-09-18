@@ -17,7 +17,10 @@ package com.maxrunsoftware.jezel.model;
 
 import static com.maxrunsoftware.jezel.Util.*;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.json.JsonObject;
@@ -30,12 +33,30 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
+import org.hibernate.Session;
+
 import com.maxrunsoftware.jezel.JsonCodable;
+import com.maxrunsoftware.jezel.Util;
 
 @Entity
 public class SchedulerAction implements JsonCodable {
 	public static final String NAME = "schedulerAction";
 	public static final String ID = NAME + "Id";
+
+	public static final Comparator<SchedulerAction> SORT_INDEX = new Comparator<SchedulerAction>() {
+		@Override
+		public int compare(SchedulerAction o1, SchedulerAction o2) {
+			if (o1 == o2) return 0;
+			if (o1 == null) return -1;
+			if (o2 == null) return 1;
+			var c = compareTo(o1.getIndex(), o2.getIndex());
+			if (c != 0) return c;
+			c = compareTo(o1.getSchedulerActionId(), o2.getSchedulerActionId());
+			if (c != 0) return c;
+
+			return 0;
+		}
+	};
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -168,6 +189,14 @@ public class SchedulerAction implements JsonCodable {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[" + getSchedulerActionId() + "]";
+	}
+
+	public static List<SchedulerAction> getBySchedulerJobId(Session session, int schedulerJobId) {
+		var list = new ArrayList<SchedulerAction>();
+		for (var o : Util.getAll(SchedulerAction.class, session)) {
+			if (Integer.valueOf(schedulerJobId).equals(o.getSchedulerJob().getSchedulerJobId())) list.add(o);
+		}
+		return list;
 	}
 
 }

@@ -18,9 +18,10 @@ package com.maxrunsoftware.jezel.view;
 import static com.maxrunsoftware.jezel.Util.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
+import com.maxrunsoftware.jezel.Constant;
 import com.maxrunsoftware.jezel.model.SchedulerAction;
+import com.maxrunsoftware.jezel.model.SchedulerJob;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,31 +33,58 @@ public class SchedulerActionServlet extends ServletBase {
 
 	@Override
 	protected void doGetAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		var schedulerActionId = getParameterInt(request, SchedulerAction.ID);
+		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
+		if (schedulerJobId == null) {
+			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerJob.ID + "' parameter provided to get SchedulerActions", 400);
+			return;
+		}
+
 		try (var session = db.openSession()) {
 
-			var schedulerActions = new ArrayList<SchedulerAction>();
-			if (schedulerActionId == null) {
-				schedulerActions.addAll(getAll(SchedulerAction.class, session));
-			} else {
-				schedulerActions.add(getById(SchedulerAction.class, session, schedulerActionId));
+			var schedulerActionsArray = createArrayBuilder();
+			var schedulerActions = SchedulerAction.getBySchedulerJobId(session, schedulerJobId);
+			for (var schedulerAction : schedulerActions) {
+				schedulerActionsArray.add(schedulerAction.toJson());
+			}
+
+			var actionNamesArray = createArrayBuilder();
+			for (var clazz : Constant.COMMANDS) {
+				actionNamesArray.add(clazz.getSimpleName());
 			}
 
 			var json = createObjectBuilder()
 					.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)
-					.add(RESPONSE_MESSAGE, "Found " + schedulerActions.size() + " SchedulerActions");
+					.add(RESPONSE_MESSAGE, "Found " + schedulerActions.size() + " SchedulerActions")
+					.add("actionNames", actionNamesArray)
+					.add(SchedulerAction.NAME, schedulerActionsArray);
 
-			json.add(SchedulerAction.NAME, createArrayBuilder(schedulerActions));
 			writeResponse(response, json);
 		}
 	}
 
 	@Override
 	protected void doPutAuthorized(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		var schedulerJobId = getParameterInt(request, SchedulerJob.ID);
+		if (schedulerJobId == null) {
+			writeResponse(response, RESPONSE_STATUS_FAILED, "No '" + SchedulerJob.ID + "' parameter provided to create SchedulerActions", 400);
+			return;
+		}
+
 		try (var session = db.openSession()) {
+			var schedulerJob = getById(SchedulerJob.class, session, schedulerJobId);
+			if (schedulerJob == null) {
+				writeResponse(response, RESPONSE_STATUS_FAILED, "SchedulerJobId of '" + SchedulerJob.ID + "' does not exist to create SchedulerActions", 400);
+				return;
+			}
+
 			var schedulerAction = new SchedulerAction();
 			schedulerAction.setDisabled(false);
+			schedulerAction.setSchedulerJob(schedulerJob);
+			schedulerAction.setIndex(Integer.MAX_VALUE);
 			var schedulerActionId = save(session, schedulerAction);
+
+			schedulerJob = getById(SchedulerJob.class, session, schedulerJobId);
+			schedulerJob.reindexSchedulerActions(session);
 
 			var json = createObjectBuilder()
 					.add(RESPONSE_STATUS, RESPONSE_STATUS_SUCCESS)

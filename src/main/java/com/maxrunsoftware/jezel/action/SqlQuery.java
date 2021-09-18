@@ -21,6 +21,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.maxrunsoftware.jezel.util.Table;
 
 public class SqlQuery extends CommandBase {
@@ -47,7 +49,8 @@ public class SqlQuery extends CommandBase {
 		l.add(createString("ConnectionString", "The JDBC connection string"));
 		l.add(createText("SQL", "The SQL Statement(s) to execute"));
 		for (int i = 1; i <= 20; i++) {
-			l.add(createFilename("OutputFile" + i, "The tab-delimited output " + i + " file"));
+			var iString = StringUtils.right("00" + i, 2);
+			l.add(createFilename("OutputFile" + iString, "The tab-delimited output " + iString + " file"));
 		}
 
 	}
