@@ -51,7 +51,7 @@ public class SchedulerActionParameterServlet extends ServletBase {
 			}
 
 			var value = trimOrNull(getParameter(request, "value"));
-			LOG.debug("Updating SchedulerAction[" + schedulerActionId + "]." + name + ": " + value);
+			LOG.debug("Updating SchedulerAction[" + schedulerActionId + "] " + schedulerAction.getName() + "." + name + "=" + value);
 
 			var result = schedulerAction.setSchedulerActionParameter(session, name, value);
 			if (result) {
