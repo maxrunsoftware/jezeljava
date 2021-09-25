@@ -267,6 +267,14 @@ public class SchedulerAction implements JsonCodable {
 
 	}
 
+	public boolean setSchedulerActionParameter(Session session, String name, String value) {
+		var p = getSchedulerActionParameter(name);
+		if (p == null) return false;
+		p.setValue(value);
+		save(session, p);
+		return true;
+	}
+
 	public static void syncAllParametersToCommand(Session session) {
 		var schedulerActions = getAll(SchedulerAction.class, session);
 		for (var schedulerAction : schedulerActions) {
